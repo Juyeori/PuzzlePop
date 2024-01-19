@@ -29,3 +29,10 @@
 * ERD 수정, 일부 테이블 통합 (v1.4)
 * API 명세서 수정
 * OAuth 로그인 인증 관련 토의
+
+
+# 🗓️ 1월 19일 (금)
+* Git branch 개념 기술 학습
+* Base Entity 구현
+* User Entity, DTO, Repository, Service 구현
+* UserRuntimeException 구현
