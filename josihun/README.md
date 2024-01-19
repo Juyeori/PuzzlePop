@@ -31,8 +31,9 @@
   - 로컬PC 개발환경 설정
   - 백엔드 개발 컨벤션 설정
   
-  # 🗓️ 2024년 01월 18일 (목)
-  - 오전
+
+# 🗓️ 2024년 01월 18일 (목)
+- 오전
   - API 명세서 수정
   - ERD 테이블명, 필드명 수정
 - 오후
@@ -41,4 +42,18 @@
   - FE 구현 컨설팅
   - 데이터베이스 개발환경 설정
   - 팀 테이블 관련 엔티티 구현
+  
+
+# 🗓️ 2024년 01월 19일 (금)
+- 오전
+  - Git branch 개념 기술 공유
+  - Team 테이블 Entity 구현
+  - Team 테이블 Dto 구현
+- 오후
+  - Team 테이블 Service 구현
+  - Team 테이블 Controller 구현
+  - Item 테이블 Entity 구현
+  - Item 테이블 Dto 구현
+  - Item 테이블 Service 구현
+  - Item 테이블 Controller 구현
   
