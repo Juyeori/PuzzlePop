@@ -97,4 +97,4 @@
     - 전체 일정 계획 수립의 필요성
 
 * EC2 초기 설정 / Docker, Jenkins 설치 및 환경 설정
-    - [Jenkins 링크](http://http://i10a304.p.ssafy.io:8080/)
+    - [Jenkins 링크](http://i10a304.p.ssafy.io:8080/)
