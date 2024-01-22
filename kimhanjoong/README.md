@@ -36,3 +36,10 @@
 * Base Entity 구현
 * User Entity, DTO, Repository, Service 구현
 * UserRuntimeException 구현
+
+
+# 🗓️ 1월 22일 (월)
+
+* Jira 2주차 일정 등록
+* ERD 수정 논의 및 (유저+인증, 인게임+상점아이템) 테이블 통합 (v1.5)
+* Google OAuth2.0 기본 기능 구현
