@@ -22,3 +22,35 @@
 * API 명세서 작성 및 검토
     - 회원, 인증, 유저상태, 친구, 개인DM, 개인설정
 * 개발환경 세팅
+
+
+# 🗓️ 1월 18일 (목)
+
+* ERD 수정, 일부 테이블 통합 (v1.4)
+* API 명세서 수정
+* OAuth 로그인 인증 관련 토의
+
+
+# 🗓️ 1월 19일 (금)
+* Git branch 개념 기술 학습
+* Base Entity 구현
+* User Entity, DTO, Repository, Service 구현
+* UserRuntimeException 구현
+
+
+# 🗓️ 1월 22일 (월)
+
+* Jira 2주차 일정 등록
+* ERD 수정 논의 및 (유저+인증, 인게임+상점아이템) 테이블 통합 (v1.5)
+* Google OAuth2.0 기본 기능 구현
+
+
+# 🗓️ 1월 23일 (화)
+
+* WBS 및 APi 명세서 정리
+* 회원관리 및 OAuth 기능 구현 중
+
+
+# 🗓️ 1월 24일 (수)
+
+* 회원관리 및 OAuth 기능 일부 구현 및 수정
