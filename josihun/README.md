@@ -76,3 +76,13 @@
   - Team 정보 갱신 기능 구현
   - Team 맞춘 피스 수 갱신 기능 구현
   - Item 랜덤 추출 기능 구현
+
+
+# 🗓️ 2024년 01월 24일 (수)
+- 오전
+  - 프로젝트 설계 리뷰 시청
+  - Merge Request 진행
+  - WBS 일정관리 마무리
+- 오후
+  - EC2, NginX & SSL, Docker, Jenkins
+  - Team-Item Mapping 테이블 구현
