@@ -1,8 +1,11 @@
-import "./App.css";
-import Example from "./Example";
+import PlayPuzzle from "./pages/playPuzzle";
 
 function App() {
-  return <Example />;
+  return (
+    <>
+      <PlayPuzzle />
+    </>
+  );
 }
 
 export default App;
