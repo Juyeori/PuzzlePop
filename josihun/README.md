@@ -84,5 +84,15 @@
   - Merge Request 진행
   - WBS 일정관리 마무리
 - 오후
-  - EC2, NginX & SSL, Docker, Jenkins
+  - EC2, NginX & SSL, Docker, Jenkins 강의시청
   - Team-Item Mapping 테이블 구현
+
+
+# 🗓️ 2024년 01월 25일 (목)
+- 오전
+  - Front 서버 1차 배포
+  - WBS, API 명세서 수정
+- 오후
+  - 발표 Architecture, ERD, API 명세서 작성
+  - Team-Item Mapping 버그 수정
+  - 컨설턴트 팀 미팅
