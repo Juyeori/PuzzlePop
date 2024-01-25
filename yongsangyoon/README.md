@@ -60,4 +60,8 @@
 
 - [x] 팀 전체 프로젝트 일정 계획 세분화 (3)
 - [x] puzzle-pop 페이지 라우팅 기능 구현
-- [x] springboot socket + react client 소켓 연결
+- [x] springboot socket + react client 소켓 연결 (1)
+
+# 🗓️ 1월 25일 (목)
+
+- [x] springboot socket + react client 소켓 연결 (2)
