@@ -96,3 +96,13 @@
   - 발표 Architecture, ERD, API 명세서 작성
   - Team-Item Mapping 버그 수정
   - 컨설턴트 팀 미팅
+
+
+# 🗓️ 2024년 01월 26일 (금)
+- 오전
+  - Sub PJT II 발표 및 평가
+- 오후
+  - Sub PJT II 발표 및 평가
+  - Gitlab Branch Merge
+  - Jira Issue 정리
+  - 2차 KPT 회고
