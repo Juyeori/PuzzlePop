@@ -1,11 +1,8 @@
-import PlayPuzzle from "./pages/playPuzzle";
+import "./App.css";
+import { Routes } from "./pages/Routes";
 
 function App() {
-  return (
-    <>
-      <PlayPuzzle />
-    </>
-  );
+  return <Routes />;
 }
 
 export default App;

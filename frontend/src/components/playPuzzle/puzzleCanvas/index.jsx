@@ -51,6 +51,7 @@ const setConfig = (img, level, Paper) => {
 const PuzzleCanvas = (props) => {
   const canvasRef = useRef(null);
   const { puzzleImg, level } = props;
+  // eslint-disable-next-line
   const [showCanvas, setShowCanvas] = useState(true);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ const PuzzleCanvas = (props) => {
     createTiles();
 
     Puzzle.move();
-  }, []);
+  }, [level, puzzleImg]);
 
   return (
     <div style={{ width: "100vw", display: "flex", justifyContent: "center" }}>
