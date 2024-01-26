@@ -20,18 +20,24 @@ public class PuzzleBoard {
     private List<Set<Piece>> bundles = new LinkedList<>(); //조합된 퍼즐 뭉탱이들
     private boolean[][] isCorrected; //조합된 퍼즐인지 확인하는 2차원 배열
 
+    private int correctedCount;
 
-
-
+    //랜덤 타입 적용에 쓰일 인덱스 상수
+    private final int TOP = 0;
+    private final int RIGHT = 1;
+    private final int BOTTOM = 2;
+    private final int LEFT = 3;
 
     private Item[] itemList = new Item[5];
     private int itemCount = 0;
+    private boolean[][] visited;
 
-    public void addItem(Item item) {
+    public void addItem(String itemName) {
         if (itemCount > 5) {
             return;
         }
 
+        Item item = new Item(itemName);
         itemList[itemCount++] = item;
     }
 
@@ -118,92 +124,89 @@ public class PuzzleBoard {
                 if (i == 0) {
                     //좌상단 꼭짓점
                     if (j == 0) {
-                        //기본 값
-                        type[0] = 0;
-                        type[3] = 0;
-
-                        //랜덤값
-                        type[1] = random(2);
-                        type[2] = random(2);
+                        type[TOP] = 0;
+                        type[LEFT] = 0;
+                        type[RIGHT] = random(2);
+                        type[BOTTOM] = random(2);
                     }
                     //우상단 꼭짓점
                     else if (j == widthCnt-1) {
-                        type[0] = 0;
-                        type[1] = 0;
-
-                        type[2] = random(2);
-                        type[3] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
+                        type[TOP] = 0;
+                        type[RIGHT] = 0;
+                        type[BOTTOM] = random(2);
+                        type[LEFT] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
                     }
                     //그 외 변
                     else {
-                        type[0] = 0;
-
-                        type[1] = random(2);
-                        type[2] = random(2);
-                        type[3] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
+                        type[TOP] = 0;
+                        type[RIGHT] = random(2);
+                        type[BOTTOM] = random(2);
+                        type[LEFT] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
                     }
                 }
                 //하단 변
                 else if (i == lengthCnt-1) {
                     //좌하단 꼭짓점
                     if (j == 0) {
-                        //기본 값
-                        type[2] = 0;
-                        type[3] = 0;
-                        type[0] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
-
-                        type[1] = random(2);
+                        type[TOP] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
+                        type[RIGHT] = random(2);
+                        type[BOTTOM] = 0;
+                        type[LEFT] = 0;
                     }
                     //우하단 꼭짓점
                     else if (j == widthCnt-1) {
-                        type[0] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
-                        type[1] = 0;
-                        type[2] = 0;
-                        type[3] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
+                        type[TOP] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
+                        type[RIGHT] = 0;
+                        type[BOTTOM] = 0;
+                        type[LEFT] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
                     }
                     //그 외 변
                     else {
-                        type[0] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
-                        type[1] = random(2);
-                        type[2] = 0;
-                        type[3] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
+                        type[TOP] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
+                        type[RIGHT] = random(2);
+                        type[BOTTOM] = 0;
+                        type[LEFT] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
                     }
                 }
 
                 //꼭짓점을 제외한 좌측 변
                 else if (j == 0) {
-                    type[0] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
-                    type[1] = random(2);
-                    type[2] = random(2);
-                    type[3] = 0;
+                    type[TOP] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
+                    type[RIGHT] = random(2);
+                    type[BOTTOM] = random(2);
+                    type[LEFT] = 0;
                 }
 
                 //꼭짓점을 제외한 우측 변
                 else if (j == widthCnt-1) {
-                    type[0] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
-                    type[1] = 0;
-                    type[2] = random(2);
-                    type[3] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
+                    type[TOP] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
+                    type[RIGHT] = 0;
+                    type[BOTTOM] = random(2);
+                    type[LEFT] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
                 }
 
                 //그 외 가운데 부분
                 else {
-                    type[0] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
-                    type[1] = random(2);
-                    type[2] = random(2);
-                    type[3] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
+                    type[TOP] = board[0][i-1][j].getType()[2] == 2 ? 1 : 2;
+                    type[RIGHT] = random(2);
+                    type[BOTTOM] = random(2);
+                    type[LEFT] = board[0][i][j-1].getType()[1] == 2 ? 1 : 2;
                 }
 
                 now.setType(type);
             }
         }
 
+        correctedCount = 0;
         randomArrange();
         return board;
     }
 
     //퍼즐 조각 결합 짜기
     //파라미터 정보(pieceList) : 게임 관련 소켓에서 결합하는 조각들을 하나의 리스트로 만들어서 파라미터로 입력
+    //TODO
+    //다 맞췄을 때 조건 추가하기
+    //맞출때 위치정보 배열에서 삭제해주기
     public void addPiece(List<Integer> pieceList) {
         //이번 결합으로 생기는 조각 뭉탱이들
         Set<Piece> set = new HashSet<>();
@@ -222,6 +225,23 @@ public class PuzzleBoard {
                 }
             }
 
+            boolean flag = false;
+            for (int j = 0; j < lengthCnt; j++) {
+                for (int k = 0; k < widthCnt; k++) {
+                    if (board[1][j][k] == null)
+                        continue;
+
+                    if (board[1][j][k].getIndex() == x.getIndex()) {
+                        board[1][j][k] = null;
+                        flag = true;
+                        break;
+                    }
+                }
+
+                if (flag)
+                    break;
+            }
+
             //결합됨을 표시
             isCorrected[idxToCoordinate.get(pieceIdx)[0]][idxToCoordinate.get(pieceIdx)[1]] = true;
             //이번 결합 뭉탱이에 추가
@@ -230,6 +250,91 @@ public class PuzzleBoard {
 
         //뭉탱이들 리스트에 이번 결합을 통해 나온 뭉탱이 추가
         bundles.add(set);
+        updatePieceCount();
+    }
+
+    public void updatePieceCount() {
+        int cnt = 0;
+        for (Set<Piece> bundle : bundles) {
+            cnt += bundle.size();
+        }
+
+        correctedCount = cnt;
+    }
+
+
+    //결합된 조각 삭제
+    public void deletePiece(int targetIdx) {
+        int r = idxToCoordinate.get(targetIdx)[0];
+        int c = idxToCoordinate.get(targetIdx)[1];
+        if (!isCorrected[r][c])
+            return;
+
+
+        for (Set<Piece> bundle : bundles) {
+            for (Iterator<Piece> it = bundle.iterator(); it.hasNext();) {
+                Piece p = it.next();
+                if (p.getIndex() == targetIdx) {
+                    it.remove();
+                    isCorrected[r][c] = false;
+                    extracted(r,c);
+                    updatePieceCount();
+                    return;
+                }
+            }
+        }
+
+
+    }
+
+    public void searchForGroupDisbandment() {
+        visited = new boolean[lengthCnt][widthCnt];
+
+        for (int i = 0; i < lengthCnt; i++) {
+            for (int j = 0; j < widthCnt; j++) {
+                if (isCorrected[i][j] && !visited[i][j]) {
+                    visited[i][j] = true;
+                    int cnt = dfsForSearch(i, j);
+
+                    if (cnt == 1) {
+                        deletePiece(board[0][i][j].getIndex());
+                    }
+                }
+            }
+        }
+    }
+
+
+    int[] dx = {1,-1,0,0};
+    int[] dy = {0,0,-1,1};
+    public int dfsForSearch(int r, int c) {
+        int cnt = 1;
+
+        for (int i = 0; i < 4; i++) {
+            int nr = r + dx[i];
+            int nc = c + dy[i];
+
+            if (nr >= 0 && nc >= 0 && nr < lengthCnt && nc < widthCnt) {
+                if (isCorrected[nr][nc] && !visited[nr][nc]) {
+                    visited[nr][nc] = true;
+                    cnt += dfsForSearch(nr, nc);
+                }
+            }
+        }
+
+        return cnt;
+    }
+
+    private void extracted(int r, int c) {
+        //랜덤 위치 할당해서 뿌려주기
+        for (int i = 0; i < lengthCnt; i++) {
+            for (int j = 0; j < widthCnt; j++) {
+                if (board[1][i][j] == null) {
+                    board[1][i][j] = board[0][r][c];
+                    return;
+                }
+            }
+        }
     }
 
 
@@ -283,6 +388,7 @@ public class PuzzleBoard {
 
     public void print() {
         System.out.println("---------------------------------------");
+        System.out.println("진행률 : " + (((double)correctedCount/(double)pieceSize)*100) + "%");
         System.out.println("퍼즐 판 정보");
         for (int i = 0; i < lengthCnt; i++) {
             for (int j = 0; j < widthCnt; j++) {
@@ -316,11 +422,12 @@ public class PuzzleBoard {
         for (Set<Piece> set : bundles) {
             System.out.println(set);
         }
+
+        System.out.println("아이템 리스트");
+        System.out.println(Arrays.toString(itemList));
         System.out.println("---------------------------------------");
     }
 
-    //TODO
-    //null 들어가니까 에러나서, 이거 처리해야함.
     public void randomArrange() {
         LinkedList<Piece> list = new LinkedList<>();
         for (int i = 0; i < lengthCnt; i++) {
