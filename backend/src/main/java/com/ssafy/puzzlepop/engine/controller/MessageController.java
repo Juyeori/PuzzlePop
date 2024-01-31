@@ -4,6 +4,7 @@ import com.ssafy.puzzlepop.engine.InGameMessage;
 import com.ssafy.puzzlepop.engine.SocketError;
 import com.ssafy.puzzlepop.engine.domain.Game;
 import com.ssafy.puzzlepop.engine.domain.GameType;
+import com.ssafy.puzzlepop.engine.domain.ResponseMessage;
 import com.ssafy.puzzlepop.engine.domain.User;
 import com.ssafy.puzzlepop.engine.service.GameService;
 import jakarta.annotation.PostConstruct;
@@ -71,9 +72,9 @@ public class MessageController {
 
     @MessageMapping("/game/message")
     public void enter(InGameMessage message) {
-        System.out.println(sessionId + " 에 대한 if문 시작");
         if (message.getType().equals(InGameMessage.MessageType.ENTER)) {
             Game game = gameService.findById(message.getRoomId());
+
             sessionToGame.put(sessionId, message.getRoomId());
 
             if (game.enterPlayer(new User(message.getSender()), sessionId)) {
@@ -91,8 +92,9 @@ public class MessageController {
                 sendingOperations.convertAndSend("/topic/game/room/"+message.getRoomId(), game);
             } else {
                 System.out.println("명령어 : " + message.getMessage());
-                Game game = gameService.playGame(message.getRoomId(), message.getMessage(), message.getTargets());
-                sendingOperations.convertAndSend("/topic/game/room/"+message.getRoomId(), game);
+                System.out.println("게임방 : " + message.getRoomId());
+                ResponseMessage res = gameService.playGame(message.getRoomId(), message.getMessage(), message.getTargets());
+                sendingOperations.convertAndSend("/topic/game/room/"+message.getRoomId(), res);
             }
         }
     }
@@ -101,14 +103,19 @@ public class MessageController {
     @Scheduled(fixedRate = 1000)
     public void sendServerTime() {
         List<Game> allRoom = gameService.findAllRoom();
-        for (int i = 0; i < allRoom.size(); i++) {
+        for (int i = allRoom.size()-1; i >= 0 ; i--) {
             if (allRoom.get(i).isStarted()) {
                 long time = allRoom.get(i).getTime();
                 if (allRoom.get(i).getGameType() == GameType.BATTLE) {
                     time = BATTLE_TIMER-time;
                 }
-                sendingOperations.convertAndSend("/topic/game/room/" + allRoom.get(i).getGameId(), time);
-                System.out.println(allRoom.get(i).getGameName() + "에 " + allRoom.get(i).getTime() + "초 라고 보냈음");
+                if (time > 0) {
+                    sendingOperations.convertAndSend("/topic/game/room/" + allRoom.get(i).getGameId(), time);
+                } else {
+                    sendingOperations.convertAndSend("/topic/game/room/" + allRoom.get(i).getGameId(), "너 게임 끝났어! 이 방 폭파됨");
+                    gameService.deleteRoom(allRoom.get(i).getGameId());
+                }
+//                System.out.println(allRoom.get(i).getGameName() + "에 " + allRoom.get(i).getTime() + "초 라고 보냈음");
             }
         }
     }
