@@ -123,4 +123,14 @@
 - 오후
   - 코치 팀 미팅
   - 취업 특강
-  
+
+
+
+# 🗓️ 2024년 01월 31일 (수)
+- 오전
+  - Jenkins BE Build & Deploy
+  - Jenkins FE Build & Deploy
+- 오후
+  - Jenkins FE Build & Deploy
+  - TeamUser Mapping Table 구현
+  - Git Branch 정리
