@@ -2,8 +2,14 @@ import { Point } from "paper/dist/paper-core";
 import Puzzle from "@/components/PlayPuzzle/PuzzleCanvas/Puzzle/index";
 import FindChange from "@/components/PlayPuzzle/PuzzleCanvas/Puzzle/FindChange";
 
+import SockJS from "sockjs-client";
+import StompJS from "stompjs";
+import { getRoomId, getSender } from "../../../../socket-utils/storage";
+
 let first = true;
 let config;
+const socket = new SockJS(`http://localhost:8080/game`);
+const stomp = StompJS.over(socket);
 
 const moveTile = () => {
   config = Puzzle.exportConfig();
@@ -13,9 +19,14 @@ const moveTile = () => {
     }
   });
 
+  const sender = getSender();
+  const roomId = getRoomId();
+
   // 모든 타일을 돌면서 마우스 이벤트 등록
   config.groupTiles.forEach((gtile, gtileIdx) => {
     gtile[0].onMouseDown = (event) => {
+      console.log("mouseDOWN", event);
+
       const group = gtile[1];
       if (group !== undefined) {
         // 그룹이면 해당 그룹의 타일들 모두 앞으로 이동
@@ -28,6 +39,21 @@ const moveTile = () => {
         // 그룹이 아닐땐 클릭된 타일만 앞으로 이동
         event.target.bringToFront();
       }
+
+      // socket 전송
+      stomp.send(
+        "/app/game/message",
+        {},
+        JSON.stringify({
+          type: "GAME",
+          roomId,
+          sender,
+          message: "MOUSE_DOWN",
+          targets: gtile[2],
+          position_x: gtile[0].position.x,
+          position_y: gtile[0].position.y,
+        }),
+      );
     };
 
     gtile[0].onMouseDrag = (event) => {
@@ -60,6 +86,29 @@ const moveTile = () => {
           }
         });
       }
+
+      // socket 전송
+      stomp.send(
+        "/app/game/message",
+        {},
+        JSON.stringify({
+          type: "GAME",
+          roomId,
+          sender,
+          message: "MOUSE_DRAG",
+          targets: gtile[2],
+          position_x: gtile[0].position.x,
+          position_y: gtile[0].position.y,
+        }),
+      );
+    };
+
+    gtile[0].onMouseEnter = (event) => {
+      //console.log("Enter", event);
+    };
+
+    gtile[0].onMouseLeave = (event) => {
+      //console.log("Leave");
     };
   });
 };
@@ -79,10 +128,28 @@ const indexUpdate = (groupIndex) => {
 };
 
 const findNearTileGroup = () => {
+  const sender = getSender();
+  const roomId = getRoomId();
+
   config = Puzzle.exportConfig();
 
   config.groupTiles.forEach((tile, tileIndex) => {
     tile[0].onMouseUp = (event) => {
+      // socket 전송
+      stomp.send(
+        "/app/game/message",
+        {},
+        JSON.stringify({
+          type: "GAME",
+          roomId,
+          sender,
+          message: "MOUSE_UP",
+          targets: tile[2],
+          position_x: tile[0].position.x,
+          position_y: tile[0].position.y,
+        }),
+      );
+
       const group = tile[1];
       if (group !== undefined) {
         config.groupTiles.forEach((gtile) => {
@@ -261,7 +328,23 @@ const fitTiles = (nowIndex, preIndex, nowTile, preTile, nowShape, preShape, dir,
   }
 };
 
+//ADD_PIECE
 const uniteTiles = (nowIndex, preIndex) => {
+  const sender = getSender();
+  const roomId = getRoomId();
+
+  stomp.send(
+    "/app/game/message",
+    {},
+    JSON.stringify({
+      type: "GAME",
+      roomId,
+      sender,
+      message: "ADD_PIECE",
+      targets: nowIndex.toString() + "," + preIndex.toString(),
+    }),
+  );
+
   const nowGroup = config.groupTiles[nowIndex][1];
   const preGroup = config.groupTiles[preIndex][1];
 
