@@ -125,7 +125,6 @@
   - 취업 특강
 
 
-
 # 🗓️ 2024년 01월 31일 (수)
 - 오전
   - Jenkins BE Build & Deploy
@@ -134,3 +133,12 @@
   - Jenkins FE Build & Deploy
   - TeamUser Mapping Table 구현
   - Git Branch 정리
+
+
+# 🗓️ 2024년 02월 01일 (목)
+- 오전
+  - OpenVidu 인프라 세팅
+  - OpenVidu API 구현
+- 오후
+  - OpenVidu 인프라 세팅
+  
