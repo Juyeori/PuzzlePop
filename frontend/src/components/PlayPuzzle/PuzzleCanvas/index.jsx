@@ -51,9 +51,9 @@ const setConfig = (img, level, Paper) => {
   Puzzle.setting(config);
 };
 
-const PuzzleCanvas = (props) => {
+const PuzzleCanvas = ({ puzzleImg, level, category, shapes }) => {
   const canvasRef = useRef(null);
-  const { puzzleImg, level } = props;
+
   // eslint-disable-next-line
   const [showCanvas, setShowCanvas] = useState(true);
 
@@ -62,15 +62,20 @@ const PuzzleCanvas = (props) => {
     if (canvas === null) {
       return;
     }
-    Paper.setup(canvas);
 
+    Paper.setup(canvas);
     setConfig(puzzleImg, level, Paper);
     // console.log(Puzzle.exportConfig());
-    createTiles();
-    Puzzle.move();
 
+    if (category === "single") {
+      createTiles();
+    } else {
+      createTiles(shapes);
+    }
+
+    Puzzle.move();
     console.log(config);
-  }, [level, puzzleImg]);
+  }, [level, puzzleImg, category, shapes]);
 
   return (
     <>
