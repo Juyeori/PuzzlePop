@@ -3,6 +3,8 @@ import styled from "styled-components";
 import Paper from "paper";
 import Puzzle from "@/components/PlayPuzzle/PuzzleCanvas/Puzzle/index";
 import { createTiles } from "@/components/PlayPuzzle/PuzzleCanvas/Puzzle/CreatePuzzle";
+import { config } from "./Puzzle/MovePuzzle";
+import { Point } from "paper/dist/paper-core";
 
 // level 임의로 3단계로
 const levelSize = { 1: 500, 2: 600, 3: 800 };
@@ -49,9 +51,9 @@ const setConfig = (img, level, Paper) => {
   Puzzle.setting(config);
 };
 
-const PuzzleCanvas = (props) => {
+const PuzzleCanvas = ({ puzzleImg, level, category, shapes }) => {
   const canvasRef = useRef(null);
-  const { puzzleImg, level } = props;
+
   // eslint-disable-next-line
   const [showCanvas, setShowCanvas] = useState(true);
 
@@ -60,23 +62,31 @@ const PuzzleCanvas = (props) => {
     if (canvas === null) {
       return;
     }
-    Paper.setup(canvas);
 
+    Paper.setup(canvas);
     setConfig(puzzleImg, level, Paper);
     // console.log(Puzzle.exportConfig());
-    createTiles();
+
+    if (category === "single") {
+      createTiles();
+    } else {
+      createTiles(shapes);
+    }
 
     Puzzle.move();
-  }, [level, puzzleImg]);
+    console.log(config);
+  }, [level, puzzleImg, category, shapes]);
 
   return (
-    <div style={{ width: "100vw", display: "flex", justifyContent: "center" }}>
-      {showCanvas ? (
-        <Canvas ref={canvasRef} id="canvas" />
-      ) : (
-        <img src={puzzleImg.current.src} alt="puzzleImage" />
-      )}
-    </div>
+    <>
+      <div style={{ width: "100vw", display: "flex", justifyContent: "center" }}>
+        {showCanvas ? (
+          <Canvas ref={canvasRef} id="canvas" />
+        ) : (
+          <img src={puzzleImg.current.src} alt="puzzleImage" />
+        )}
+      </div>
+    </>
   );
 };
 
