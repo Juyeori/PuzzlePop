@@ -188,4 +188,12 @@
 
 * DM 관련 API 수정
 
-* Stomp WebSocket 이요한 DM 서비스 구현 중
+* Stomp WebSocket 이용한 DM 서비스 구현 중
+
+
+
+# 🗓️ 2월 2일 (금)
+
+* Stomp WebSocket 사용자 인증 구현 중
+
+* KPT 회고 진행
