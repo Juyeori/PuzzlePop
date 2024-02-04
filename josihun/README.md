@@ -141,4 +141,13 @@
   - OpenVidu API 구현
 - 오후
   - OpenVidu 인프라 세팅
-  
+
+
+# 🗓️ 2024년 02월 01일 (목)
+- 오전
+  - OpenVidu 인프라 세팅
+- 오후
+  - Team-User Mapping Entity 구현
+  - Team-User Mapping Dto 구현
+  - Team-User Mapping Repository 구현
+  - Team-User Mapping Service 구현
