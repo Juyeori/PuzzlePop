@@ -65,3 +65,7 @@
 # 🗓️ 1월 25일 (목)
 
 - [x] springboot socket + react client 소켓 연결 (2)
+
+# 🗓️ 1월 29일 (월)
+
+- [x] springboot socket + react client 소켓 연결 (3)

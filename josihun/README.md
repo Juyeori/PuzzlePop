@@ -106,3 +106,48 @@
   - Gitlab Branch Merge
   - Jira Issue 정리
   - 2차 KPT 회고
+
+
+# 🗓️ 2024년 01월 29일 (월)
+- 오전
+  - Spring 수동 배포
+  - React 수동 배포
+  - Jenkins 서버 세팅
+- 오후
+  - 조퇴
+
+
+# 🗓️ 2024년 01월 30일 (화)
+- 오전
+  - Jenkins 서버 세팅
+- 오후
+  - 코치 팀 미팅
+  - 취업 특강
+
+
+# 🗓️ 2024년 01월 31일 (수)
+- 오전
+  - Jenkins BE Build & Deploy
+  - Jenkins FE Build & Deploy
+- 오후
+  - Jenkins FE Build & Deploy
+  - TeamUser Mapping Table 구현
+  - Git Branch 정리
+
+
+# 🗓️ 2024년 02월 01일 (목)
+- 오전
+  - OpenVidu 인프라 세팅
+  - OpenVidu API 구현
+- 오후
+  - OpenVidu 인프라 세팅
+
+
+# 🗓️ 2024년 02월 01일 (목)
+- 오전
+  - OpenVidu 인프라 세팅
+- 오후
+  - Team-User Mapping Entity 구현
+  - Team-User Mapping Dto 구현
+  - Team-User Mapping Repository 구현
+  - Team-User Mapping Service 구현
