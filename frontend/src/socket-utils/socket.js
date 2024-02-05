@@ -1,18 +1,15 @@
 import SockJS from "sockjs-client";
 import StompJS from "stompjs";
 
-const SOCKET_END_POINT = "http://localhost:8080/game";
+// const SOCKET_END_POINT = "http://localhost:8080/game";
+const SOCKET_END_POINT = "http://localhost:8082/game";
 
 const createSocket = () => {
   let sock;
   let stomp;
   const subscriptions = new Set();
 
-  const onError = () => {
-    console.log("socket error...");
-  };
-
-  const connect = (onConnectCallback) => {
+  const connect = (onConnectCallback, onError) => {
     if (!sock) {
       sock = new SockJS(SOCKET_END_POINT);
     }

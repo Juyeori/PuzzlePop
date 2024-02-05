@@ -2,14 +2,13 @@ package com.ssafy.puzzlepop.engine.controller;
 
 import com.ssafy.puzzlepop.engine.InGameMessage;
 import com.ssafy.puzzlepop.engine.SocketError;
-import com.ssafy.puzzlepop.engine.domain.Game;
-import com.ssafy.puzzlepop.engine.domain.ResponseMessage;
-import com.ssafy.puzzlepop.engine.domain.User;
+import com.ssafy.puzzlepop.engine.domain.*;
 import com.ssafy.puzzlepop.engine.service.GameService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
@@ -93,6 +92,12 @@ public class MessageController {
                 sendingOperations.convertAndSend("/topic/game/room/"+message.getRoomId(),new SocketError("room", "방 가득 참"));
                 System.out.println(gameService.findById(message.getRoomId()).getGameName() + "에 " + message.getSender() + "님이 입장하지 못했습니다.");
             }
+        } else if (message.getType().equals(InGameMessage.MessageType.CHAT)) {
+            ResponseChatMessage responseChatMessage = new ResponseChatMessage();
+            responseChatMessage.setChatMessage(message.getMessage());
+            responseChatMessage.setUserid(message.getSender());
+            responseChatMessage.setTime(new Date());
+            sendingOperations.convertAndSend("/topic/chat/room/"+message.getRoomId(), responseChatMessage);
         } else {
             if (message.getMessage().equals("GAME_START")) {
                 System.out.println("GAME_START");
@@ -129,6 +134,31 @@ public class MessageController {
                     gameService.deleteRoom(allRoom.get(i).getGameId());
                 }
 //                System.out.println(allRoom.get(i).getGameName() + "에 " + allRoom.get(i).getTime() + "초 라고 보냈음");
+            }
+        }
+    }
+
+    //배틀 드랍 아이템 제공
+    //20초에 한번씩 제공하기로 함
+    //테스트용 확률 조정
+    @Scheduled(fixedRate = 5000)
+    public void sendDropItem() {
+        //배틀로 변경해야함
+        List<Game> allRoom = gameService.findAllCooperationRoom();
+        Random random = new Random();
+        for (int i = allRoom.size()-1; i >= 0 ; i--) {
+            if (allRoom.get(i).isStarted()) {
+                //확률 계산
+                int possibility = random.nextInt(100);
+                System.out.println(possibility + " %");
+                if (possibility <= 70) {
+                    DropItem item = DropItem.randomCreate();
+                    System.out.println(item + "을 생성합니다.");
+                    ResponseMessage res = new ResponseMessage();
+                    res.setMessage("DROP_ITEM");
+                    res.setRandomItem(item);
+                    sendingOperations.convertAndSend("/topic/game/room/" + allRoom.get(i).getGameId(), res);
+                }
             }
         }
     }
