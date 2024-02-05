@@ -36,12 +36,17 @@ public class GameRoomController {
         return ResponseEntity.ok(allBattleRoom);
     }
 
-
     //게임 생성
     @PostMapping("/room")
     @ResponseBody
     public Game createRoom(@RequestBody Room room) {
         return gameService.createRoom(room);
+    }
+
+
+    @PostMapping("/room/picture")
+    public void updatePicture(@RequestBody Long id) {
+
     }
 
     //특정 게임방 조회
@@ -58,6 +63,10 @@ public class GameRoomController {
                 }
 
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Game is started");
+            }
+
+            if (game.getRedTeam().getPlayers().contains(user) || game.getBlueTeam().getPlayers().contains(user)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("너 이미 안에 있는데?");
             }
 
             if (game.getGameType().equals("BATTLE")) {

@@ -31,6 +31,10 @@ export default function CooperationGameIngamePage() {
     // TODO: 여기서 Lock에 대한 UI처리를 해제한다.
   };
 
+  const addPeice = (fromIndex, toIndex) => {
+    console.log(fromIndex, toIndex);
+  };
+
   const connectSocket = async () => {
     // websocket 연결 시도
     connect(
@@ -76,6 +80,13 @@ export default function CooperationGameIngamePage() {
             return;
           }
 
+          if (data.message && data.message === "ADD_PIECE") {
+            const { targets } = data;
+            const [fromIndex, toIndex] = targets.split(",").map((piece) => Number(piece));
+            addPeice(fromIndex, toIndex);
+            return;
+          }
+
           //랜덤 아이템 드랍(사실 배틀에 있어야하는데 여기서 테스트)
           if (data.randomItem) {
             // 버튼 생성
@@ -101,7 +112,7 @@ export default function CooperationGameIngamePage() {
                   roomId: getRoomId(),
                   sender: getSender(),
                   message: "USE_RANDOM_ITEM",
-                  targets: data.randomItem.name,
+                  targets: data.randomItem.uuid,
                 }),
               );
             };
