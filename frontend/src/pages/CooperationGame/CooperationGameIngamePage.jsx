@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import PlayPuzzle from "../../components/PlayPuzzle";
-import { getRoomId, getSender } from "../../socket-utils/storage";
-import { socket } from "../../socket-utils/socket";
-import { parsePuzzleShapes } from "../../socket-utils/parsePuzzleShapes";
-import { config, uniteTiles } from "../../components/PlayPuzzle/PuzzleCanvas/Puzzle/MovePuzzle";
+import PlayPuzzle from "@/components/PlayPuzzle";
+import Loading from "@/components/Loading";
+import { getRoomId, getSender, getTeam } from "@/socket-utils/storage";
+import { socket } from "@/socket-utils/socket";
+import { parsePuzzleShapes } from "@/socket-utils/parsePuzzleShapes";
+import { config, uniteTiles } from "@/components/PlayPuzzle/PuzzleCanvas/Puzzle/MovePuzzle";
 import { Point } from "paper/dist/paper-core";
 
 const { connect, send, subscribe, disconnect } = socket;
@@ -94,7 +95,6 @@ export default function CooperationGameIngamePage() {
 
             if (combo) {
               console.log("콤보 효과 발동 !! : ", combo);
-              console.log(typeof combo);
               combo.forEach(([toIndex, fromIndex]) => addPiece(fromIndex, toIndex));
             }
 
@@ -185,21 +185,31 @@ export default function CooperationGameIngamePage() {
     // eslint-disable-next-line
   }, []);
 
-  if (loading) {
-    return <h1>게임 정보를 받아오는 중...</h1>;
-  }
+  useEffect(() => {
+    if (gameData) {
+      console.log(gameData);
+      setLoading(false);
+    }
+  }, [gameData]);
 
   return (
     <>
       <h1>CooperationGameIngamePage : {roomId}</h1>
-      {gameData && gameData.redPuzzle && gameData.redPuzzle.board && (
-        <PlayPuzzle
-          shapes={parsePuzzleShapes(
-            gameData.redPuzzle.board,
-            gameData.picture.widthPieceCnt,
-            gameData.picture.lengthPieceCnt,
-          )}
-        />
+      {loading ? (
+        <Loading message="게임 정보 받아오는 중..." />
+      ) : (
+        gameData &&
+        gameData[`${getTeam()}Puzzle`] &&
+        gameData[`${getTeam()}Puzzle`].board && (
+          <PlayPuzzle
+            shapes={parsePuzzleShapes(
+              gameData[`${getTeam()}Puzzle`].board,
+              gameData.picture.widthPieceCnt,
+              gameData.picture.lengthPieceCnt,
+            )}
+            board={gameData[`${getTeam()}Puzzle`].board}
+          />
+        )
       )}
     </>
   );
