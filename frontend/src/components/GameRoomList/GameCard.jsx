@@ -12,7 +12,9 @@ import {
   createTheme,
   ThemeProvider,
 } from "@mui/material";
-import { setRoomId, setSender } from "@/socket-utils/storage";
+import { setRoomId, setSender, setTeam } from "@/socket-utils/storage";
+import { request } from "../../apis/requestBuilder";
+import { isAxiosError } from "axios";
 
 export default function GameCard({ room, category }) {
   const navigate = useNavigate();
@@ -42,7 +44,17 @@ export default function GameCard({ room, category }) {
     }
     setSender(sender);
     setRoomId(roomId);
-    navigate(`/game/${category}/waiting/${roomId}`);
+    setTeam("red");
+
+    try {
+      const res = await request.post(`/game/room/${roomId}`, { id: sender });
+      console.log(res);
+      navigate(`/game/${category}/waiting/${roomId}`);
+    } catch (e) {
+      if (isAxiosError(e) && e.response.status === 400) {
+        window.alert("다른 닉네임을 사용해주세요.");
+      }
+    }
   };
 
   const handleClick = (event) => {

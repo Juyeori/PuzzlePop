@@ -8,8 +8,9 @@ import { red, blue } from "@mui/material/colors";
 import { PlayerCard, EmptyPlayerCard, XPlayerCard } from "@/components/GameWaiting/PlayerCard";
 import SelectImgAndPiece from "@/components/GameWaiting/SelectImgAndPiece";
 import GameOpenVidu from "@/components/GameIngame/openvidu/GameOpenVidu";
+import { setTeam } from "@/socket-utils/storage";
 
-export default function GameWaitingBoard({ data, allowedPiece, category }) {
+export default function GameWaitingBoard({ player, data, allowedPiece, category }) {
   // const redTeam = data.player.filter((player) => player.isRedTeam);
   // const blueTeam = data.player.filter((player) => !player.isRedTeam);
   const { redTeam, blueTeam, gameId, gameName, picture, roomSize } = data;
@@ -82,7 +83,7 @@ export default function GameWaitingBoard({ data, allowedPiece, category }) {
   return (
     <Wrapper container="true" spacing={4}>
       {/* 현재 접속중인 플레이어 (나)가 누군지 알아야함 !! */}
-      {/* <GameOpenVidu gameId={gameId} playerName={player.nickname} /> */}
+      <GameOpenVidu gameId={gameId} playerName={player} />
       <ColGrid item="true" xs={8}>
         {/* 방 번호, 방 제목, 인원수 header */}
         <InnerBox sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -147,10 +148,20 @@ export default function GameWaitingBoard({ data, allowedPiece, category }) {
             <ThemeProvider theme={theme}>
               <Box sx={{ display: "flex" }}>
                 {/* 팀 선택 버튼들, 추후 socket 연결하여 플레이어의 팀 정보 수정해야 함 */}
-                <TeamButton variant="contained" color="redTeam" disableElevation>
+                <TeamButton
+                  variant="contained"
+                  color="redTeam"
+                  disableElevation
+                  onClick={() => setTeam("red")}
+                >
                   Red
                 </TeamButton>
-                <TeamButton variant="contained" color="blueTeam" disableElevation>
+                <TeamButton
+                  variant="contained"
+                  color="blueTeam"
+                  disableElevation
+                  onClick={() => setTeam("blue")}
+                >
                   Blue
                 </TeamButton>
               </Box>

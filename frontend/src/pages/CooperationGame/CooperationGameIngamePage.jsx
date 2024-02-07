@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import PlayPuzzle from "../../components/PlayPuzzle";
-import { getRoomId, getSender } from "../../socket-utils/storage";
-import { socket } from "../../socket-utils/socket";
-import { parsePuzzleShapes } from "../../socket-utils/parsePuzzleShapes";
-import { config } from "../../components/PlayPuzzle/PuzzleCanvas/Puzzle/MovePuzzle";
+import PlayPuzzle from "@/components/PlayPuzzle";
+import Loading from "@/components/Loading";
+import { getRoomId, getSender, getTeam } from "@/socket-utils/storage";
+import { socket } from "@/socket-utils/socket";
+import { parsePuzzleShapes } from "@/socket-utils/parsePuzzleShapes";
+import { config, uniteTiles } from "@/components/PlayPuzzle/PuzzleCanvas/Puzzle/MovePuzzle";
 import { Point } from "paper/dist/paper-core";
 
 const { connect, send, subscribe, disconnect } = socket;
@@ -31,6 +32,24 @@ export default function CooperationGameIngamePage() {
     // TODO: 여기서 Lock에 대한 UI처리를 해제한다.
   };
 
+  const addPiece = (fromIndex, toIndex) => {
+    console.log(fromIndex, toIndex);
+    uniteTiles(fromIndex, toIndex);
+  };
+
+  // const addCombo = (fromIndex, toIndex) => {
+  //   console.log("addCombo 함수 실행 :", fromIndex, toIndex);
+  //   console.log(config);
+  // };
+
+  const finishGame = (data) => {
+    if (data.finished === true) {
+      window.alert("게임이 종료되었습니다.");
+      window.location.href = `/game/cooperation/waiting/${roomId}`;
+      return;
+    }
+  };
+
   const connectSocket = async () => {
     // websocket 연결 시도
     connect(
@@ -41,38 +60,45 @@ export default function CooperationGameIngamePage() {
           const data = JSON.parse(message.body);
           console.log(data);
 
-          // 1. 게임이 끝나면 대기실 화면으로 보낸다.
-          //여기 수정함
-          if (data.finished === true && data.gameId) {
-            window.alert("게임이 종료되었습니다.");
-            window.location.href = `/game/cooperation/waiting/${data.gameId}`;
-            return;
-          }
-
           // 2. 게임정보 받기
           if (data.gameType && data.gameType === "COOPERATION") {
             setGameData(data);
+            console.log("gamedata is here!", gameData, data);
             return;
           }
 
           if (data.message && data.message === "LOCKED") {
             const { targets } = data;
-            const { x, y, index } = JSON.parse(targets.slice(1, -1));
-            lockPuzzle(x, y, index);
+            const targetList = JSON.parse(targets);
+            targetList.forEach(({ x, y, index }) => lockPuzzle(x, y, index));
             return;
           }
 
           if (data.message && data.message === "MOVE") {
             const { targets } = data;
-            const { x, y, index } = JSON.parse(targets.slice(1, -1));
-            movePuzzle(x, y, index);
+            const targetList = JSON.parse(targets);
+            targetList.forEach(({ x, y, index }) => movePuzzle(x, y, index));
             return;
           }
 
           if (data.message && data.message === "UNLOCKED") {
             const { targets } = data;
-            const { x, y, index } = JSON.parse(targets.slice(1, -1));
-            unLockPuzzle(x, y, index);
+            const targetList = JSON.parse(targets);
+            targetList.forEach(({ x, y, index }) => unLockPuzzle(x, y, index));
+            return;
+          }
+
+          if (data.message && data.message === "ADD_PIECE") {
+            const { targets, combo } = data;
+            const [fromIndex, toIndex] = targets.split(",").map((piece) => Number(piece));
+            addPiece(fromIndex, toIndex);
+
+            if (combo) {
+              console.log("콤보 효과 발동 !! : ", combo);
+              combo.forEach(([toIndex, fromIndex]) => addPiece(fromIndex, toIndex));
+            }
+
+            finishGame(data);
             return;
           }
 
@@ -101,7 +127,7 @@ export default function CooperationGameIngamePage() {
                   roomId: getRoomId(),
                   sender: getSender(),
                   message: "USE_RANDOM_ITEM",
-                  targets: data.randomItem.name,
+                  targets: data.randomItem.uuid,
                 }),
               );
             };
@@ -159,15 +185,31 @@ export default function CooperationGameIngamePage() {
     // eslint-disable-next-line
   }, []);
 
-  if (loading) {
-    return <h1>게임 정보를 받아오는 중...</h1>;
-  }
+  useEffect(() => {
+    if (gameData) {
+      console.log(gameData);
+      setLoading(false);
+    }
+  }, [gameData]);
 
   return (
     <>
       <h1>CooperationGameIngamePage : {roomId}</h1>
-      {gameData && gameData.redPuzzle && gameData.redPuzzle.board && (
-        <PlayPuzzle shapes={parsePuzzleShapes(gameData.redPuzzle.board[0])} />
+      {loading ? (
+        <Loading message="게임 정보 받아오는 중..." />
+      ) : (
+        gameData &&
+        gameData[`${getTeam()}Puzzle`] &&
+        gameData[`${getTeam()}Puzzle`].board && (
+          <PlayPuzzle
+            shapes={parsePuzzleShapes(
+              gameData[`${getTeam()}Puzzle`].board,
+              gameData.picture.widthPieceCnt,
+              gameData.picture.lengthPieceCnt,
+            )}
+            board={gameData[`${getTeam()}Puzzle`].board}
+          />
+        )
       )}
     </>
   );
