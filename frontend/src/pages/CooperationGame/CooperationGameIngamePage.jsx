@@ -7,6 +7,7 @@ import { socket } from "@/socket-utils/socket";
 import { parsePuzzleShapes } from "@/socket-utils/parsePuzzleShapes";
 import { config, uniteTiles } from "@/components/PlayPuzzle/PuzzleCanvas/Puzzle/MovePuzzle";
 import { Point } from "paper/dist/paper-core";
+import comboAudioPath from "@/assets/audio/combo.mp3";
 
 const { connect, send, subscribe, disconnect } = socket;
 
@@ -37,10 +38,26 @@ export default function CooperationGameIngamePage() {
     uniteTiles(fromIndex, toIndex);
   };
 
-  // const addCombo = (fromIndex, toIndex) => {
-  //   console.log("addCombo 함수 실행 :", fromIndex, toIndex);
-  //   console.log(config);
-  // };
+  const addCombo = (fromIndex, toIndex, direction) => {
+    let dir = -1;
+    switch (direction) {
+      case 0:
+        dir = 3;
+        break;
+      case 1:
+        dir = 0;
+        break;
+      case 2:
+        dir = 2;
+        break;
+      case 3:
+        dir = 1;
+        break;
+    }
+    console.log("addCombo 함수 실행 :", fromIndex, toIndex, direction, dir);
+    console.log(config);
+    uniteTiles(fromIndex, toIndex, false, true, dir);
+  };
 
   const finishGame = (data) => {
     if (data.finished === true) {
@@ -95,7 +112,20 @@ export default function CooperationGameIngamePage() {
 
             if (combo) {
               console.log("콤보 효과 발동 !! : ", combo);
-              combo.forEach(([toIndex, fromIndex]) => addPiece(fromIndex, toIndex));
+              combo.forEach(([toIndex, fromIndex, direction]) =>
+                addCombo(fromIndex, toIndex, direction),
+              );
+
+              const audio = new Audio(comboAudioPath);
+              audio.loop = false;
+              audio.crossOrigin = "anonymous";
+              audio.volume = 0.5;
+              audio.load();
+              try {
+                audio.play();
+              } catch (err) {
+                console.log(err);
+              }
             }
 
             finishGame(data);
