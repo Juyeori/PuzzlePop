@@ -4,12 +4,12 @@ import { configStore } from "../puzzle-core";
 
 const { initializePuzzle } = configStore;
 
-export default function PuzzleCanvas({ puzzleImg, level, shapes, board }) {
+export default function PuzzleCanvas({ puzzleImg, level, shapes, board, picture }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
     if (canvasRef.current) {
-      initializePuzzle({ canvasRef, puzzleImg, level, shapes, board });
+      initializePuzzle({ canvasRef, puzzleImg, level, shapes, board, picture });
     }
 
     // eslint-disable-next-line
