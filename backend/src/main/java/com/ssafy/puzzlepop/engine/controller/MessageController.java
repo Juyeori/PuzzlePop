@@ -12,6 +12,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -50,20 +51,25 @@ public class MessageController {
         if (game == null) {
             return;
         }
-        System.out.println(game.getSessionToUser().get(sessionId).getId() + " 님이 퇴장하십니다.");
-        game.exitPlayer(sessionId);
-        gameService.sessionToGame.remove(sessionId);
 
-        if (game.isEmpty()) {
-            System.out.println("game.isEmpty()");
-            //잠시 대기
-            Thread.sleep(5000);
-            if (game.isEmpty()) {
-                System.out.println("진짜 나간것같아. 게임 지울게!");
-                gameService.deleteRoom(gameId);
+        if (accessor.getCommand().equals(StompCommand.DISCONNECT)) {
+            if (game.isFinished()) {
+                System.out.println(game.getSessionToUser().get(sessionId).getId() + " 님이 퇴장하십니다.");
+                game.exitPlayer(sessionId);
+                gameService.sessionToGame.remove(sessionId);
             } else {
-                System.out.println("새로고침이였어. 다시 연결한다!");
-                return;
+                if (game.isEmpty()) {
+                    System.out.println("game.isEmpty()");
+                    //잠시 대기
+                    Thread.sleep(5000);
+                    if (game.isEmpty()) {
+                        System.out.println("진짜 나간것같아. 게임 지울게!");
+                        gameService.deleteRoom(gameId);
+                    } else {
+                        System.out.println("새로고침이였어. 다시 연결한다!");
+                        return;
+                    }
+                }
             }
         }
 
@@ -106,15 +112,11 @@ public class MessageController {
                     System.out.println("게임 시작 안했음! 명령 무시함");
                     return;
                 }
-                Game game = gameService.startGame(message.getRoomId());
-                log.info("지금 게임 서비스 들어감");
+                Game game = gameService.findById(message.getRoomId());
                 ResponseMessage res = gameService.playGame(message);
                 res.setRedItemList(game.getRedPuzzle().getItemList());
                 res.setBlueItemList(game.getBluePuzzle().getItemList());
-                log.info("게임 서비스에서 나옴");
-                log.info("브로드 캐스팅 하기 직전");
                 sendingOperations.convertAndSend("/topic/game/room/" + message.getRoomId(), res);
-                log.info("브로드 캐스팅 완료");
             }
         }
     }
@@ -143,11 +145,9 @@ public class MessageController {
 
     //배틀 드랍 아이템 제공
     //20초에 한번씩 제공하기로 함
-    //테스트용 확률 조정
     @Scheduled(fixedRate = 20000)
     public void sendDropItem() {
-        //TODO 배틀로 변경해야함
-        List<Game> allRoom = gameService.findAllCooperationRoom();
+        List<Game> allRoom = gameService.findAllBattleRoom();
         Random random = new Random();
         for (int i = allRoom.size()-1; i >= 0 ; i--) {
             if (allRoom.get(i).isStarted()) {
