@@ -6,6 +6,7 @@ import com.ssafy.puzzlepop.engine.domain.*;
 import com.ssafy.puzzlepop.engine.service.GameService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseEntity;
@@ -23,20 +24,13 @@ import java.util.*;
 @Controller
 @RequiredArgsConstructor
 @EnableScheduling
+@Slf4j
 public class MessageController {
-
-    @Autowired
-    private GameService gameService;
+    private final GameService gameService;
     private final SimpMessageSendingOperations sendingOperations;
     private final int BATTLE_TIMER = 300;
     private String sessionId;
-    private Map<String, String> sessionToGame;
 
-    @PostConstruct
-    public void init() {
-        sessionToGame = new LinkedHashMap<>();
-        sessionToGame = Collections.synchronizedMap(sessionToGame);
-    }
 
     //세션 아이디 설정
     @EventListener
@@ -51,19 +45,19 @@ public class MessageController {
         System.out.println("MessageController.handleDisconnectEvent");
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String sessionId = accessor.getSessionId();
-        String gameId = sessionToGame.get(sessionId);
+        String gameId = gameService.sessionToGame.get(sessionId);
         Game game = gameService.findById(gameId);
         if (game == null) {
             return;
         }
         System.out.println(game.getSessionToUser().get(sessionId).getId() + " 님이 퇴장하십니다.");
         game.exitPlayer(sessionId);
-        sessionToGame.remove(sessionId);
+        gameService.sessionToGame.remove(sessionId);
 
         if (game.isEmpty()) {
             System.out.println("game.isEmpty()");
             //잠시 대기
-            Thread.sleep(1500);
+            Thread.sleep(5000);
             if (game.isEmpty()) {
                 System.out.println("진짜 나간것같아. 게임 지울게!");
                 gameService.deleteRoom(gameId);
@@ -83,7 +77,7 @@ public class MessageController {
         if (message.getType().equals(InGameMessage.MessageType.ENTER)) {
             Game game = gameService.findById(message.getRoomId());
 
-            sessionToGame.put(sessionId, message.getRoomId());
+            gameService.sessionToGame.put(sessionId, message.getRoomId());
 
             if (game.enterPlayer(new User(message.getSender()), sessionId)) {
                 sendingOperations.convertAndSend("/topic/game/room/"+message.getRoomId(), game);
@@ -113,12 +107,14 @@ public class MessageController {
                     return;
                 }
                 Game game = gameService.startGame(message.getRoomId());
-                System.out.println("명령어 : " + message.getMessage());
-                System.out.println("게임방 : " + message.getRoomId());
+                log.info("지금 게임 서비스 들어감");
                 ResponseMessage res = gameService.playGame(message);
                 res.setRedItemList(game.getRedPuzzle().getItemList());
                 res.setBlueItemList(game.getBluePuzzle().getItemList());
+                log.info("게임 서비스에서 나옴");
+                log.info("브로드 캐스팅 하기 직전");
                 sendingOperations.convertAndSend("/topic/game/room/" + message.getRoomId(), res);
+                log.info("브로드 캐스팅 완료");
             }
         }
     }
