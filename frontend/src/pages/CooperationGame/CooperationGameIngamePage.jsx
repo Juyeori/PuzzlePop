@@ -6,13 +6,15 @@ import { getRoomId, getSender, getTeam } from "@/socket-utils/storage";
 import { socket } from "@/socket-utils/socket";
 import { parsePuzzleShapes } from "@/socket-utils/parsePuzzleShapes";
 import comboAudioPath from "@/assets/audio/combo.mp3";
-import { usePuzzleConfig } from "../../hooks/usePuzzleConfig";
+// import { usePuzzleConfig } from "../../hooks/usePuzzleConfig";
 import ItemController from "../../components/ItemController";
+import { configStore } from "../../puzzle-core";
 
-const { connect, send, subscribe, disconnect } = socket;
+const { connect, send, subscribe } = socket;
+const { getConfig, lockPuzzle, movePuzzle, unLockPuzzle, addPiece, addCombo } = configStore;
 
 export default function CooperationGameIngamePage() {
-  const { config, lockPuzzle, movePuzzle, unLockPuzzle, addPiece, addCombo } = usePuzzleConfig();
+  // const { config, lockPuzzle, movePuzzle, unLockPuzzle, addPiece, addCombo } = usePuzzleConfig();
 
   const navigate = useNavigate();
   const { roomId } = useParams();
@@ -33,11 +35,9 @@ export default function CooperationGameIngamePage() {
   };
 
   const connectSocket = async () => {
-    // websocket 연결 시도
     connect(
       () => {
-        // console.log("WebSocket 연결 성공");
-
+        console.log("@@@@@@@@@@@@@@@@ 인게임 소켓 연결 @@@@@@@@@@@@@@@@@@");
         subscribe(`/topic/game/room/${roomId}`, (message) => {
           const data = JSON.parse(message.body);
           console.log(data);
@@ -153,10 +153,11 @@ export default function CooperationGameIngamePage() {
         );
       },
       () => {
-        window.alert("게임이 종료되었거나 입장할 수 없습니다.");
-        navigate(`/game/cooperation`, {
-          replace: true,
-        });
+        console.log("@@@@@@@@@@@@@@@@@@@@@socket error 발생@@@@@@@@@@@@@@@@@@@@@");
+        // window.alert("게임이 종료되었거나 입장할 수 없습니다.");
+        // navigate(`/game/cooperation`, {
+        //   replace: true,
+        // });
       },
     );
   };
@@ -172,10 +173,6 @@ export default function CooperationGameIngamePage() {
     connectSocket();
     setLoading(false);
 
-    return () => {
-      disconnect();
-    };
-
     // eslint-disable-next-line
   }, []);
 
@@ -185,8 +182,6 @@ export default function CooperationGameIngamePage() {
       setLoading(false);
     }
   }, [gameData]);
-
-  console.log(config);
 
   return (
     <>
@@ -199,14 +194,16 @@ export default function CooperationGameIngamePage() {
         gameData[`${getTeam()}Puzzle`].board && (
           <>
             <PlayPuzzle
+              category="cooperation"
               shapes={parsePuzzleShapes(
                 gameData[`${getTeam()}Puzzle`].board,
                 gameData.picture.widthPieceCnt,
                 gameData.picture.lengthPieceCnt,
               )}
               board={gameData[`${getTeam()}Puzzle`].board}
+              picture={gameData.picture}
             />
-            <ItemController />
+            {/* <ItemController /> */}
           </>
         )
       )}
