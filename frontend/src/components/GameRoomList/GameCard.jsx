@@ -58,8 +58,10 @@ export default function GameCard({ room, category }) {
     }
   };
 
-  const handleClick = (event) => {
-    enterRoom(event.currentTarget.id);
+  const handleClick = (event, started) => {
+    if (!started) {
+      enterRoom(event.currentTarget.id);
+    }
   };
 
   const fetchImage = async () => {
@@ -68,7 +70,13 @@ export default function GameCard({ room, category }) {
   };
 
   useEffect(() => {
-    fetchImage();
+    if (picture.encodedString === "짱구.jpg") {
+      setImgSrc(
+        "https://i.namu.wiki/i/1zQlFS0_ZoofiPI4-mcmXA8zXHEcgFiAbHcnjGr7RAEyjwMHvDbrbsc8ekjZ5iWMGyzJrGl96Fv5ZIgm6YR_nA.webp",
+      );
+    } else {
+      fetchImage();
+    }
   }, []);
 
   const theme = createTheme({
@@ -78,7 +86,7 @@ export default function GameCard({ room, category }) {
   });
 
   return (
-    <MyCard onClick={handleClick} id={gameId}>
+    <MyCard onClick={(e) => handleClick(e, started)} id={gameId} started={started.toString()}>
       <ThemeProvider theme={theme}>
         <MyCardActionArea>
           <CardMedia
@@ -126,6 +134,12 @@ const MyCard = styled(Card)`
   &:hover {
     box-shadow: 5px 5px 10px lightgray;
   }
+  opacity: ${(props) => {
+    if (props.started === "true") {
+      return 0.6;
+    }
+    return 1;
+  }};
 `;
 
 const MyCardActionArea = styled(CardActionArea)`
@@ -154,6 +168,3 @@ const RoomState = styled(Typography)`
     }
   }};
 `;
-
-const SAMPLE_IMAGE =
-  "https://img1.daumcdn.net/thumb/R1280x0.fjpg/?fname=http://t1.daumcdn.net/brunch/service/user/cnoC/image/R7FVHsxQscWuMqj6TtNhHLSH8do";
