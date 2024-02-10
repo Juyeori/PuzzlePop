@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import styled from "styled-components";
 import PlayPuzzle from "@/components/PlayPuzzle";
 import Loading from "@/components/Loading";
+import Timer from "@/components/GameIngame/Timer";
+import PrograssBar from "@/components/GameIngame/ProgressBar";
 import { getRoomId, getSender, getTeam } from "@/socket-utils/storage";
 import { socket } from "@/socket-utils/socket";
 import { parsePuzzleShapes } from "@/socket-utils/parsePuzzleShapes";
 import comboAudioPath from "@/assets/audio/combo.mp3";
+import redTeamBackgroundPath from "@/assets/redTeamBackground.gif";
+import blueTeamBackgroundPath from "@/assets/blueTeamBackground.gif";
 import { configStore } from "@/puzzle-core";
+import { Grid, Box } from "@mui/material";
+import { red, blue } from "@mui/material/colors";
 
 const { connect, send, subscribe } = socket;
 const { getConfig, lockPuzzle, movePuzzle, unLockPuzzle, addPiece, addCombo } = configStore;
@@ -18,6 +25,9 @@ export default function BattleGameIngamePage() {
   const { roomId } = useParams();
   const [loading, setLoading] = useState(true);
   const [gameData, setGameData] = useState(null);
+  const [time, setTime] = useState(0);
+  const [ourPercent, setOurPercent] = useState(0);
+  const [enemyPercent, setEnemyPercent] = useState(0);
 
   const finishGame = (data) => {
     if (data.finished === true) {
@@ -40,58 +50,76 @@ export default function BattleGameIngamePage() {
           const data = JSON.parse(message.body);
           console.log(data);
 
+          // 1. timer 설정
+          if (!data.gameType && data.time) {
+            setTime(data.time);
+          }
+
           // 2. 게임정보 받기
           if (data.gameType && data.gameType === "BATTLE") {
             initializeGame(data);
             return;
           }
 
-          if (data.message && data.message === "LOCKED") {
-            const { targets } = data;
-            const targetList = JSON.parse(targets);
-            targetList.forEach(({ x, y, index }) => lockPuzzle(x, y, index));
-            return;
+          if (data.redProgressPercent >= 0 && data.blueProgressPercent >= 0) {
+            console.log("진행도?", data.redProgressPercent, data.blueProgressPercent);
+            if (getTeam() === "red") {
+              setOurPercent(data.redProgressPercent);
+              setEnemyPercent(data.blueProgressPercent);
+            } else {
+              setOurPercent(data.blueProgressPercent);
+              setEnemyPercent(data.redProgressPercent);
+            }
           }
 
-          if (data.message && data.message === "MOVE") {
-            const { targets } = data;
-            const targetList = JSON.parse(targets);
-            targetList.forEach(({ x, y, index }) => movePuzzle(x, y, index));
-            return;
-          }
-
-          if (data.message && data.message === "UNLOCKED") {
-            const { targets } = data;
-            const targetList = JSON.parse(targets);
-            targetList.forEach(({ x, y, index }) => unLockPuzzle(x, y, index));
-            return;
-          }
-
-          if (data.message && data.message === "ADD_PIECE") {
-            const { targets, combo } = data;
-            const [fromIndex, toIndex] = targets.split(",").map((piece) => Number(piece));
-            addPiece({ fromIndex, toIndex });
-
-            if (combo) {
-              console.log("콤보 효과 발동 !! : ", combo);
-              combo.forEach(([toIndex, fromIndex, direction]) =>
-                addCombo(fromIndex, toIndex, direction),
-              );
-
-              const audio = new Audio(comboAudioPath);
-              audio.loop = false;
-              audio.crossOrigin = "anonymous";
-              audio.volume = 0.5;
-              audio.load();
-              try {
-                audio.play();
-              } catch (err) {
-                console.log(err);
-              }
+          if (data.message && data.team === getTeam().toUpperCase()) {
+            if (data.message && data.message === "LOCKED") {
+              const { targets } = data;
+              const targetList = JSON.parse(targets);
+              targetList.forEach(({ x, y, index }) => lockPuzzle(x, y, index));
+              return;
             }
 
-            finishGame(data);
-            return;
+            if (data.message && data.message === "MOVE") {
+              const { targets } = data;
+              const targetList = JSON.parse(targets);
+              targetList.forEach(({ x, y, index }) => movePuzzle(x, y, index));
+              return;
+            }
+
+            if (data.message && data.message === "UNLOCKED") {
+              const { targets } = data;
+              const targetList = JSON.parse(targets);
+              targetList.forEach(({ x, y, index }) => unLockPuzzle(x, y, index));
+              return;
+            }
+
+            if (data.message && data.message === "ADD_PIECE") {
+              const { targets, combo } = data;
+              const [fromIndex, toIndex] = targets.split(",").map((piece) => Number(piece));
+              addPiece({ fromIndex, toIndex });
+
+              if (combo) {
+                console.log("콤보 효과 발동 !! : ", combo);
+                combo.forEach(([toIndex, fromIndex, direction]) =>
+                  addCombo(fromIndex, toIndex, direction),
+                );
+
+                const audio = new Audio(comboAudioPath);
+                audio.loop = false;
+                audio.crossOrigin = "anonymous";
+                audio.volume = 0.5;
+                audio.load();
+                try {
+                  audio.play();
+                } catch (err) {
+                  console.log(err);
+                }
+              }
+
+              finishGame(data);
+              return;
+            }
           }
 
           if (data.message && data.message === "ATTACK") {
@@ -207,29 +235,72 @@ export default function BattleGameIngamePage() {
   }, [gameData]);
 
   return (
-    <>
-      <h1>BattleGameIngamePage : {roomId}</h1>
+    <Wrapper>
+      {/* <h1>BattleGameIngamePage : {roomId}</h1> */}
       {loading ? (
         <Loading message="게임 정보 받아오는 중..." />
       ) : (
         gameData &&
         gameData[`${getTeam()}Puzzle`] &&
         gameData[`${getTeam()}Puzzle`].board && (
-          <>
-            <PlayPuzzle
-              category="battle"
-              shapes={parsePuzzleShapes(
-                gameData[`${getTeam()}Puzzle`].board,
-                gameData.picture.widthPieceCnt,
-                gameData.picture.lengthPieceCnt,
-              )}
-              board={gameData[`${getTeam()}Puzzle`].board}
-              picture={gameData.picture}
-            />
+          <div>
+            <>
+              <Timer num={time} />
+
+              <Board>
+                <PlayPuzzle
+                  category="battle"
+                  shapes={parsePuzzleShapes(
+                    gameData[`${getTeam()}Puzzle`].board,
+                    gameData.picture.widthPieceCnt,
+                    gameData.picture.lengthPieceCnt,
+                  )}
+                  board={gameData[`${getTeam()}Puzzle`].board}
+                  picture={gameData.picture}
+                />
+                <ProgressWrapper>
+                  <PrograssBar percent={ourPercent} isEnemy={false} />
+                </ProgressWrapper>
+                <ProgressWrapper>
+                  <PrograssBar percent={enemyPercent} isEnemy={true} />
+                </ProgressWrapper>
+              </Board>
+            </>
+
             {/* <ItemController /> */}
-          </>
+          </div>
         )
       )}
-    </>
+    </Wrapper>
   );
 }
+
+const Wrapper = styled.div`
+  height: 1000px;
+  background-image: ${getTeam() === "red"
+    ? `url(${redTeamBackgroundPath})`
+    : `url(${blueTeamBackgroundPath})`};
+`;
+
+const ColGrid = styled(Grid)`
+  display: flex;
+  flex-direction: column;
+`;
+
+const Board = styled.div`
+  width: 1320px;
+  display: flex;
+  position: relative;
+  top: 50px;
+  margin: auto;
+  padding: 2%;
+  border-radius: 20px;
+  border: 3px solid ${getTeam() === "red" ? red[400] : blue[400]};
+  background-color: rgba(255, 255, 255, 0.8);
+`;
+
+const ProgressWrapper = styled(Box)`
+  margin: 0 1px;
+  display: inline-block;
+  transform: rotate(180deg);
+`;
