@@ -8,22 +8,37 @@ const SERVER_END_POINT = import.meta.env.DEV ? VITE_DEV_SERVER_END_POINT : VITE_
 const SOCKET_END_POINT = `${SERVER_END_POINT}/game`;
 
 const createSocket = () => {
-  const sock = new SockJS(SOCKET_END_POINT);
-  const stomp = StompJS.over(sock);
+  let sock;
+  let stomp;
 
   const connect = (onConnectCallback, onError) => {
+    sock = new SockJS(SOCKET_END_POINT);
+    stomp = StompJS.over(sock);
+
     stomp.connect({}, onConnectCallback, onError);
   };
 
   const send = (destination, obj, message) => {
+    if (!stomp) {
+      return;
+    }
+
     stomp.send(destination, obj, message);
   };
 
   const subscribe = (destination, onMessageReceiverCallback) => {
+    if (!stomp) {
+      return;
+    }
+
     stomp.subscribe(destination, onMessageReceiverCallback);
   };
 
   const disconnect = () => {
+    if (!stomp) {
+      return;
+    }
+
     stomp.disconnect();
   };
 

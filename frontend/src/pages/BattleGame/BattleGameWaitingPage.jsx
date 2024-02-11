@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import styled from "styled-components";
 import { getSender, getRoomId, setTeam } from "@/socket-utils/storage";
 import { socket } from "@/socket-utils/socket";
 import Header from "@/components/Header";
@@ -8,6 +9,7 @@ import GameWaitingBoard from "@/components/GameWaiting/GameWaitingBoard";
 import Loading from "@/components/Loading";
 import { request } from "@/apis/requestBuilder";
 import { isAxiosError } from "axios";
+import backgroundPath from "@/assets/background.gif";
 
 const { connect, send, subscribe } = socket;
 
@@ -98,91 +100,30 @@ export default function BattleGameWaitingPage() {
     }
   }, [gameData]);
 
-  const handleGameStart = () => {
-    if (getSender()) {
-      send(
-        `/app/game/message`,
-        {},
-        JSON.stringify({
-          roomId,
-          sender: getSender(),
-          message: "GAME_START",
-          type: "GAME",
-        }),
-      );
-    }
-  };
-
   return (
-    <>
+    <Wrapper>
       <Header />
       {loading ? (
         <Loading message="방 정보 불러오는 중..." />
       ) : (
         <>
-          <ChattingTest chatHistory={chatHistory} />
-          <div>
-            <button onClick={handleGameStart}>GAME START</button>
-          </div>
-          {/* 필요한 정보 : 각 플레이어의 상태 (방장, 준비완료, 준비x) */}
           <GameWaitingBoard
             player={getSender()}
             data={gameData}
             allowedPiece={allowedPiece}
             category="battle"
+            chatHistory={chatHistory}
           />
         </>
       )}
       <Footer />
-    </>
+    </Wrapper>
   );
 }
 
 const allowedPiece = [100, 200, 300, 400, 500];
 
-const ChattingTest = ({ chatHistory }) => {
-  const [message, setMessage] = useState("");
-
-  const handleMessageSend = (e) => {
-    e.preventDefault();
-    if (getSender()) {
-      send(
-        `/app/game/message`,
-        {},
-        JSON.stringify({
-          roomId: getRoomId(),
-          sender: getSender(),
-          message,
-          type: "CHAT",
-        }),
-      );
-      setMessage("");
-    }
-  };
-
-  return (
-    <div>
-      <div style={{ marginBottom: "10px" }}>
-        {/* 채팅 기록을 화면에 출력 */}
-        {chatHistory.map((chat, index) => (
-          <div key={index}>
-            <strong>
-              {chat.userid}[{chat.time}]:{" "}
-            </strong>
-            {chat.chatMessage}
-          </div>
-        ))}
-      </div>
-
-      <form onSubmit={handleMessageSend}>
-        <input
-          type="text"
-          placeholder="채팅"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <button type="submit">Send</button>
-      </form>
-    </div>
-  );
-};
+const Wrapper = styled.div`
+  height: 1000px;
+  background-image: url(${backgroundPath});
+`;
