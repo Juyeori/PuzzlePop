@@ -22,7 +22,17 @@ import { Box } from "@mui/material";
 import { red, blue } from "@mui/material/colors";
 
 const { connect, send, subscribe } = socket;
-const { getConfig, lockPuzzle, movePuzzle, unLockPuzzle, addPiece, addCombo, fire } = configStore;
+const {
+  getConfig,
+  lockPuzzle,
+  movePuzzle,
+  unLockPuzzle,
+  addPiece,
+  addCombo,
+  usingItemFire,
+  usingItemRocket,
+  usingItemEarthquake,
+} = configStore;
 
 export default function BattleGameIngamePage() {
   const navigate = useNavigate();
@@ -34,8 +44,9 @@ export default function BattleGameIngamePage() {
   const [enemyPercent, setEnemyPercent] = useState(0);
   const [chatHistory, setChatHistory] = useState([]);
   const [pictureSrc, setPictureSrc] = useState("");
-  // const [bundles, setBundles] = useState([]);
-  const bundles = useRef([]);
+
+  // const bundles = useRef([]);
+  const dropRandomItem = useRef(null);
 
   const finishGame = (data) => {
     if (data.finished === true) {
@@ -71,6 +82,7 @@ export default function BattleGameIngamePage() {
           }
 
           // 진행도
+          // TODO : ATTACK일때 시간 초 늦게 반영되는 효과
           if (data.redProgressPercent >= 0 && data.blueProgressPercent >= 0) {
             console.log("진행도?", data.redProgressPercent, data.blueProgressPercent);
             if (getTeam() === "red") {
@@ -160,38 +172,98 @@ export default function BattleGameIngamePage() {
 
           if (data.message && data.message === "ATTACK") {
             console.log("공격메세지", data);
-            const { targets, targetList, deleted, randomItem } = data;
-
-            console.log("나 게임 인포 보낸다?");
-            send(
-              "/app/game/message",
-              {},
-              JSON.stringify({
-                type: "GAME",
-                message: "GAME_INFO",
-                roomId: getRoomId(),
-                sender: getSender(),
-              }),
-            );
-
-            if (randomItem.name === "FIRE") {
-              console.log("fire 발동 !!");
+            // dropRandomItem 삭제
+            if (dropRandomItem.current.parentNode) {
+              dropRandomItem.current.parentNode.removeChild(dropRandomItem.current);
             }
 
-            setTimeout(() => {
-              console.log("번들 찾아볼게", bundles.current);
-              if (targetList && targets === getTeam().toUpperCase()) {
-                fire(bundles.current, targetList);
-              }
-            }, 2000);
+            const { targets, targetList, deleted, randomItem, redBundles, blueBundles } = data;
+
+            // console.log("나 게임 인포 보낸다?");
+            // send(
+            //   "/app/game/message",
+            //   {},
+            //   JSON.stringify({
+            //     type: "GAME",
+            //     message: "GAME_INFO",
+            //     roomId: getRoomId(),
+            //     sender: getSender(),
+            //   }),
+            // );
+
+            if (randomItem.name === "FIRE") {
+              console.log("랜덤 아이템 fire 였어!");
+
+              // // fire 당하는 팀의 효과
+              // if (targets === getTeam().toUpperCase()) {
+
+              // } else { // fire 발동하는 팀의 효과
+
+              // }
+
+              setTimeout(() => {
+                console.log("레드팀 번들", redBundles);
+                console.log("블루팀 번들", blueBundles);
+                if (targetList && targets === getTeam().toUpperCase()) {
+                  console.log("fire 발동 !!");
+                  const attackedTeamBundles = getTeam() === "red" ? redBundles : blueBundles;
+                  usingItemFire(attackedTeamBundles, targetList);
+                }
+              }, 2000);
+            }
+
+            if (randomItem.name === "ROCKET") {
+              console.log("랜덤 아이템 rocket 였어!");
+
+              // // rocket 당하는 팀의 효과
+              // if (targets === getTeam().toUpperCase()) {
+
+              // } else { // rocket 발동하는 팀의 효과
+
+              // }
+
+              setTimeout(() => {
+                // console.log("레드팀 번들", redBundles);
+                // console.log("블루팀 번들", blueBundles);
+                if (targetList && targets === getTeam().toUpperCase()) {
+                  console.log("rocket 발동 !!");
+                  usingItemRocket(targetList);
+                }
+              }, 2000);
+            }
+
+            if (randomItem.name === "EARTHQUAKE") {
+              console.log("랜덤 아이템 earthquake 였어!");
+
+              console.log("지진 발동", data);
+
+              // // earthquake 당하는 팀의 효과
+              // if (targets === getTeam().toUpperCase()) {
+
+              // } else { // earthquake 발동하는 팀의 효과
+
+              // }
+
+              setTimeout(() => {
+                // console.log();
+                if (targetList && targets === getTeam().toUpperCase()) {
+                  console.log("earthquake 발동 !!");
+                  usingItemEarthquake(targetList, deleted);
+                }
+              }, 2000);
+            }
           }
 
           if (data.message && data.message === "SHIELD") {
             console.log("공격메세지 : 쉴드", data);
+            // dropRandomItem 삭제
+            dropRandomItem.current.parentNode.removeChild(dropRandomItem.current);
           }
 
           if (data.message && data.message === "MIRROR") {
             console.log("공격메세지 : 거울", data);
+            // dropRandomItem 삭제
+            dropRandomItem.current.parentNode.removeChild(dropRandomItem.current);
           }
 
           // drop random Item 생성
@@ -228,6 +300,7 @@ export default function BattleGameIngamePage() {
             };
 
             // 버튼을 canvasContainer에 추가
+            dropRandomItem.current = dropRandomItemImg;
             canvasContainer.appendChild(dropRandomItemImg);
 
             // alert 대신 메시지를 콘솔에 출력
@@ -308,7 +381,7 @@ export default function BattleGameIngamePage() {
           : `data:image/jpeg;base64,${gameData.picture.encodedString}`;
 
       // const targetTeam = getTeam() === "red" ? "blue" : "red";
-      bundles.current = gameData[`${getTeam()}Puzzle`].bundles;
+      // bundles.current = gameData[`${getTeam()}Puzzle`].bundles;
       setPictureSrc(tempSrc);
       setLoading(false);
     }
