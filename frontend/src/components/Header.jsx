@@ -64,6 +64,7 @@ export default function Header() {
     } else {
       // 로그아웃 상태이면 로그인 처리
       // window.location.href = `${SERVER_URL}/login`;
+      // window.location.href = `${SERVER_URL}/oauth2/authorization/google`;
       request.get(`${SERVER_URL}/login`)
     }
   }
