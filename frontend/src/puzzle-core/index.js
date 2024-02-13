@@ -3,7 +3,8 @@ import { Point } from "paper/dist/paper-core";
 import { initializeConfig } from "./initializeConfig";
 import { removeItemStyleToPiece, searchItemList, setItemStyleToAllPiece } from "./item";
 import { setMoveEvent } from "./setMoveEvent";
-import { uniteTiles } from "./uniteTiles";
+import { uniteTiles, uniteTiles2 } from "./uniteTiles";
+import { cleanBorderStyle, updateGroupByBundles } from "./utils";
 
 const createPuzzleConfig = () => {
   let config = {};
@@ -47,7 +48,7 @@ const createPuzzleConfig = () => {
     // TODO: 여기서 Lock에 대한 UI처리를 해제한다.
   };
 
-  const addPiece = ({ fromIndex, toIndex }) => {
+  const addPiece = ({ fromIndex, toIndex }, bundles = []) => {
     const afterUnitedConfig = uniteTiles({
       config,
       preIndex: fromIndex,
@@ -61,23 +62,7 @@ const createPuzzleConfig = () => {
     config = afterCheckItemConfig;
   };
 
-  const addCombo = (fromIndex, toIndex, direction) => {
-    let dir = -1;
-    switch (direction) {
-      case 0:
-        dir = 3;
-        break;
-      case 1:
-        dir = 0;
-        break;
-      case 2:
-        dir = 2;
-        break;
-      case 3:
-        dir = 1;
-        break;
-    }
-
+  const addCombo = (fromIndex, toIndex, direction, bundles = []) => {
     // console.log("addCombo 함수 실행 :", fromIndex, toIndex, direction, dir);
     // console.log(config);
 
@@ -87,10 +72,13 @@ const createPuzzleConfig = () => {
       preIndex: toIndex,
       isSender: false,
       isCombo: true,
-      direction: dir,
+      direction: switchDirection(direction),
     });
 
-    config = nextConfig;
+    config = cleanBorderStyle({ config: nextConfig });
+
+    // const updatedConfig = updateGroupByBundles({ config: nextConfig, bundles }); // 콤보랑 같이 쓰면 버그가..
+    // config = cleanBorderStyle({ config: updatedConfig });
   };
 
   // 공격형 아이템 fire
@@ -154,9 +142,32 @@ const createPuzzleConfig = () => {
     });
   };
 
-  const usingItemFrame = (puzzleIndexList) => {
-    console.log(puzzleIndexList);
-    console.log(getConfig());
+  const usingItemFrame = (targetList) => {
+    console.log(targetList);
+    console.log(config);
+  };
+
+  const usingItemMagnet = (targetList, bundles = []) => {
+    const [targetPuzzleIndex, ...aroundPuzzleIndexList] = targetList;
+
+    // TODO: 모두 -1이면 알림띄워주기 (자석을 사용할 곳이 없음..)
+
+    for (let direction = 0; direction < 4; direction += 1) {
+      const puzzleIndex = aroundPuzzleIndexList[direction];
+      if (puzzleIndex === -1) {
+        continue;
+      }
+
+      const unitedConfig = uniteTiles2({
+        config,
+        nowIndex: targetPuzzleIndex,
+        preIndex: puzzleIndex,
+        direction: switchDirection(direction),
+      });
+
+      const updatedConfig = updateGroupByBundles({ config: unitedConfig, bundles });
+      config = cleanBorderStyle({ config: updatedConfig });
+    }
   };
 
   return {
@@ -172,7 +183,27 @@ const createPuzzleConfig = () => {
     usingItemRocket,
     usingItemEarthquake,
     usingItemFrame,
+    usingItemMagnet,
   };
 };
 
 export const configStore = createPuzzleConfig();
+
+const switchDirection = (direction) => {
+  let dir = -1;
+  switch (direction) {
+    case 0:
+      dir = 3;
+      break;
+    case 1:
+      dir = 0;
+      break;
+    case 2:
+      dir = 2;
+      break;
+    case 3:
+      dir = 1;
+      break;
+  }
+  return dir;
+};

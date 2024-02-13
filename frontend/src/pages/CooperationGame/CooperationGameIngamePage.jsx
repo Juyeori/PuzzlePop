@@ -25,7 +25,15 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { deepPurple } from "@mui/material/colors";
 
 const { connect, send, subscribe, disconnect } = socket;
-const { lockPuzzle, movePuzzle, unLockPuzzle, addPiece, addCombo, usingItemFrame } = configStore;
+const {
+  lockPuzzle,
+  movePuzzle,
+  unLockPuzzle,
+  addPiece,
+  addCombo,
+  usingItemFrame,
+  usingItemMagnet,
+} = configStore;
 
 export default function CooperationGameIngamePage() {
   const navigate = useNavigate();
@@ -129,21 +137,21 @@ export default function CooperationGameIngamePage() {
             setOurPercent(data.redProgressPercent);
           }
 
-          if (data.message && (data.message === "LOCKED") !== getSender()) {
+          if (data.message && data.message === "LOCKED" && data.senderId !== getSender()) {
             const { targets } = data;
             const targetList = JSON.parse(targets);
             targetList.forEach(({ x, y, index }) => lockPuzzle(x, y, index));
             return;
           }
 
-          if (data.message && (data.message === "MOVE") !== getSender()) {
+          if (data.message && data.message === "MOVE" && data.senderId !== getSender()) {
             const { targets } = data;
             const targetList = JSON.parse(targets);
             targetList.forEach(({ x, y, index }) => movePuzzle(x, y, index));
             return;
           }
 
-          if (data.message && (data.message === "UNLOCKED") !== getSender()) {
+          if (data.message && data.message === "UNLOCKED" && data.senderId !== getSender()) {
             const { targets } = data;
             const targetList = JSON.parse(targets);
             targetList.forEach(({ x, y, index }) => unLockPuzzle(x, y, index));
@@ -151,62 +159,20 @@ export default function CooperationGameIngamePage() {
           }
 
           if (data.message && data.message === "ADD_PIECE") {
-            const { targets, combo, comboCnt } = data;
+            const { targets, combo, comboCnt: comboCount, redBundles } = data;
             const [fromIndex, toIndex] = targets.split(",").map((piece) => Number(piece));
-            addPiece({ fromIndex, toIndex });
+            addPiece({ fromIndex, toIndex }, redBundles);
             cleanHint({ fromIndex, toIndex });
-
             if (combo) {
-              console.log("콤보 효과 발동 !! : ", combo);
-              combo.forEach(([toIndex, fromIndex, direction]) =>
-                addCombo(fromIndex, toIndex, direction),
-              );
-
-              if (comboCnt) {
-                console.log(`${comboCnt} 콤보문구 생성`);
-                const comboText = document.createElement("h2");
-                const canvasContainer = document.getElementById("canvasContainer");
-                comboText.textContent = `${comboCnt}COMBO!!`;
-
-                comboText.style.zIndex = 100;
-                comboText.style.position = "fixed";
-                comboText.style.left = "50%";
-                comboText.style.top = "40px";
-                comboText.style.transform = "translate(-50%, 0)";
-                comboText.style.fontSize = "30px";
-
-                canvasContainer.appendChild(comboText);
-
-                console.log(comboText);
-                setTimeout(() => {
-                  console.log("콤보 문구 삭제");
-                  console.log(comboText);
-                  console.log(comboText.parentNode);
-                  console.log(comboText.parentElement);
-                  comboText.parentNode.removeChild(comboText);
-                }, 2000);
-              }
-
-              const audio = new Audio(comboAudioPath);
-              audio.loop = false;
-              audio.crossOrigin = "anonymous";
-              // audio.volume = 0.5;
-              audio.load();
-              try {
-                audio.play();
-              } catch (err) {
-                console.log(err);
-              }
+              effectCombo({ combo, comboCount });
             }
             return;
           }
 
           // "FRAME(액자)" 아이템 사용
           if (data.message && data.message === "FRAME") {
-            console.log("액자 사용한다~~!!!");
             const { targetList } = data;
-            console.log(targetList);
-            // targetList에 나온 index를 다 맞춰버린다.
+            // usingItemFrame(targetList)
             return;
           }
 
@@ -219,13 +185,16 @@ export default function CooperationGameIngamePage() {
 
           // "MAGNET(자석)" 아이템 사용
           if (data.message && data.message === "MAGNET") {
-            console.log("자석 사용한다~~!!!");
-            const { targetList } = data;
-            console.log(targetList);
+            const { targetList, redBundles } = data;
+            usingItemMagnet(targetList, redBundles);
             return;
           }
 
-          // if ()
+          // 게임정보 받기
+          if (data.gameType && data.gameType === "COOPERATION") {
+            setGameData(data);
+            return;
+          }
         });
 
         // 채팅
@@ -347,6 +316,51 @@ export default function CooperationGameIngamePage() {
   );
 }
 
+const effectCombo = ({ combo, comboCount }) => {
+  combo.forEach(([toIndex, fromIndex, direction]) => addCombo(fromIndex, toIndex, direction));
+  if (comboCount) {
+    renderComboAlert(comboCount);
+  }
+  onComboSound();
+};
+
+const renderComboAlert = (comboCnt) => {
+  console.log(`${comboCnt} 콤보문구 생성`);
+  const comboText = document.createElement("h2");
+  const canvasContainer = document.getElementById("canvasContainer");
+  comboText.textContent = `${comboCnt}COMBO!!`;
+
+  comboText.style.zIndex = 100;
+  comboText.style.position = "fixed";
+  comboText.style.left = "50%";
+  comboText.style.top = "40px";
+  comboText.style.transform = "translate(-50%, 0)";
+  comboText.style.fontSize = "30px";
+
+  canvasContainer.appendChild(comboText);
+
+  console.log(comboText);
+  setTimeout(() => {
+    console.log("콤보 문구 삭제");
+    console.log(comboText);
+    console.log(comboText.parentNode);
+    console.log(comboText.parentElement);
+    comboText.parentNode.removeChild(comboText);
+  }, 2000);
+};
+
+const onComboSound = () => {
+  const audio = new Audio(comboAudioPath);
+  audio.loop = false;
+  audio.crossOrigin = "anonymous";
+  // audio.volume = 0.5;
+  audio.load();
+  try {
+    audio.play();
+  } catch (err) {
+    console.log(err);
+  }
+};
 const Wrapper = styled.div`
   height: 100vh;
   min-height: 1000px;

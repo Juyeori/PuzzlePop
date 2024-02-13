@@ -22,10 +22,12 @@ import dropRandomItemPath from "@/assets/dropRandomItem.gif";
 import { Box, Dialog, DialogTitle } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { red, blue, deepPurple } from "@mui/material/colors";
+import { useHint } from "../../hooks/useHint";
+import Hint from "../../components/GameItemEffects/Hint";
+import { createPortal } from "react-dom";
 
 const { connect, send, subscribe, disconnect } = socket;
 const {
-  getConfig,
   lockPuzzle,
   movePuzzle,
   unLockPuzzle,
@@ -34,6 +36,8 @@ const {
   usingItemFire,
   usingItemRocket,
   usingItemEarthquake,
+  usingItemFrame,
+  usingItemMagnet,
 } = configStore;
 
 export default function BattleGameIngamePage() {
@@ -47,7 +51,20 @@ export default function BattleGameIngamePage() {
   const [enemyPercent, setEnemyPercent] = useState(0);
   const [chatHistory, setChatHistory] = useState([]);
   const [pictureSrc, setPictureSrc] = useState("");
-  const [itemInventory, setItemInventory] = useState([null, null, null, null, null]);
+  const [redItemInventory, setRedItemInventory] = useState([null, null, null, null, null]);
+  const [blueItemInventory, setBlueItemInventory] = useState([null, null, null, null, null]);
+  const {
+    hintList: redHintList,
+    addHint: redAddHint,
+    closeHint: redCloseHint,
+    cleanHint: redCleanHint,
+  } = useHint();
+  const {
+    hintList: blueHintList,
+    addHint: blueAddHint,
+    closeHint: blueCloseHint,
+    cleanHint: blueCleanHint,
+  } = useHint();
 
   const dropRandomItem = useRef(null);
 
@@ -107,7 +124,10 @@ export default function BattleGameIngamePage() {
 
           // 매번 보유아이템배열을 업데이트
           if (data.redItemList) {
-            setItemInventory(data.redItemList);
+            setRedItemInventory(data.redItemList);
+          }
+          if (data.blueItemList) {
+            setBlueItemInventory(data.blueItemList);
           }
 
           // 게임정보 받기
@@ -127,6 +147,20 @@ export default function BattleGameIngamePage() {
               setOurPercent(data.blueProgressPercent);
               setEnemyPercent(data.redProgressPercent);
             }
+          }
+
+          // "MAGNET(자석)" 아이템 사용
+          if (data.message && data.message === "MAGNET") {
+            const { targetList, redBundles, blueBundles, targets } = data;
+            if (targets === getTeam().toUpperCase()) {
+              const targetBundles = getTeam() === "red" ? redBundles : blueBundles;
+              usingItemMagnet(targetList, targetBundles);
+            }
+
+            // if (targets === "BLUE") {
+            //   usingItemMagnet(targetList, blueBundles);
+            // }
+            return;
           }
 
           // 우리팀 event
@@ -153,9 +187,17 @@ export default function BattleGameIngamePage() {
             }
 
             if (data.message && data.message === "ADD_PIECE") {
-              const { targets, combo, comboCnt } = data;
+              const { targets, combo, comboCnt, team } = data;
               const [fromIndex, toIndex] = targets.split(",").map((piece) => Number(piece));
               addPiece({ fromIndex, toIndex });
+
+              if (team === "RED") {
+                redCleanHint({ fromIndex, toIndex });
+              }
+
+              if (team === "BLUE") {
+                blueCleanHint({ fromIndex, toIndex });
+              }
 
               if (combo) {
                 console.log("콤보 효과 발동 !! : ", combo);
@@ -202,6 +244,20 @@ export default function BattleGameIngamePage() {
 
               return;
             }
+          }
+
+          // "HINT(힌트)" 아이템 사용
+          if (data.message && data.message === "HINT") {
+            const { targetList, targets } = data;
+            if (targets === "RED") {
+              redAddHint(...targetList);
+            }
+
+            if (targets === "BLUE") {
+              blueAddHint(...targetList);
+            }
+
+            return;
           }
 
           if (data.message && data.message === "ATTACK") {
@@ -419,56 +475,75 @@ export default function BattleGameIngamePage() {
     },
   });
 
+  if (!isLoaded) {
+    return <Loading message="게임 정보 받아오는 중..." />;
+  }
+
   return (
     <Wrapper>
-      {!isLoaded ? (
-        <Loading message="게임 정보 받아오는 중..." />
-      ) : (
+      <Board>
+        <PlayPuzzle
+          category="battle"
+          shapes={parsePuzzleShapes(
+            gameData[`${getTeam()}Puzzle`].board,
+            gameData.picture.widthPieceCnt,
+            gameData.picture.lengthPieceCnt,
+          )}
+          board={gameData[`${getTeam()}Puzzle`].board}
+          picture={gameData.picture}
+        />
+        <Row>
+          <ProgressWrapper>
+            <PrograssBar percent={ourPercent} isEnemy={false} />
+          </ProgressWrapper>
+          <ProgressWrapper>
+            <PrograssBar percent={enemyPercent} isEnemy={true} />
+          </ProgressWrapper>
+        </Row>
+
+        <Col>
+          <Timer num={time} />
+          <h3>이 그림을 맞춰주세요!</h3>
+          <img
+            src={pictureSrc}
+            alt="퍼즐 그림"
+            style={{ width: "100%", borderRadius: "10px", margin: "5px" }}
+          />
+          <Chatting chatHistory={chatHistory} isIngame={true} isBattle={true} />
+        </Col>
+      </Board>
+
+      {getTeam() === "red" ? (
         <>
-          <Board>
-            <PlayPuzzle
-              category="battle"
-              shapes={parsePuzzleShapes(
-                gameData[`${getTeam()}Puzzle`].board,
-                gameData.picture.widthPieceCnt,
-                gameData.picture.lengthPieceCnt,
-              )}
-              board={gameData[`${getTeam()}Puzzle`].board}
-              picture={gameData.picture}
-            />
-            <Row>
-              <ProgressWrapper>
-                <PrograssBar percent={ourPercent} isEnemy={false} />
-              </ProgressWrapper>
-              <ProgressWrapper>
-                <PrograssBar percent={enemyPercent} isEnemy={true} />
-              </ProgressWrapper>
-            </Row>
-
-            <Col>
-              <Timer num={time} />
-              <h3>이 그림을 맞춰주세요!</h3>
-              <img
-                src={pictureSrc}
-                alt="퍼즐 그림"
-                style={{ width: "100%", borderRadius: "10px", margin: "5px" }}
-              />
-              <Chatting chatHistory={chatHistory} isIngame={true} isBattle={true} />
-            </Col>
-          </Board>
-
           <ItemController
-            itemInventory={itemInventory}
+            itemInventory={redItemInventory}
             onSendUseItemMessage={handleSendUseItemMessage}
           />
-
-          <ThemeProvider theme={theme}>
-            <Dialog open={isOpenedDialog} onClose={handleCloseGame}>
-              <DialogTitle>게임 결과</DialogTitle>
-            </Dialog>
-          </ThemeProvider>
+          {document.querySelector("#canvasContainer") &&
+            createPortal(
+              <Hint hintList={redHintList} onClose={redCloseHint} />,
+              document.querySelector("#canvasContainer"),
+            )}
+        </>
+      ) : (
+        <>
+          <ItemController
+            itemInventory={blueItemInventory}
+            onSendUseItemMessage={handleSendUseItemMessage}
+          />
+          {document.querySelector("#canvasContainer") &&
+            createPortal(
+              <Hint hintList={blueHintList} onClose={blueCloseHint} />,
+              document.querySelector("#canvasContainer"),
+            )}
         </>
       )}
+
+      <ThemeProvider theme={theme}>
+        <Dialog open={isOpenedDialog} onClose={handleCloseGame}>
+          <DialogTitle>게임 결과</DialogTitle>
+        </Dialog>
+      </ThemeProvider>
     </Wrapper>
   );
 }
