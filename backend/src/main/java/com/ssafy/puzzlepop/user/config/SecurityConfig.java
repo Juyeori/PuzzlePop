@@ -5,6 +5,7 @@ import com.ssafy.puzzlepop.user.filter.TokenAuthenticationProcessingFilter;
 import com.ssafy.puzzlepop.user.handler.Oauth2AuthenticationFailureHandler;
 import com.ssafy.puzzlepop.user.handler.Oauth2AuthenticationSuccessHandler;
 import com.ssafy.puzzlepop.user.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,7 +17,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -27,7 +27,8 @@ public class SecurityConfig {
     private final TokenAuthenticationProcessingFilter tokenAuthenticationProcessingFilter;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
 
-    private String frontendUrl = "https://i10a304.p.ssafy.io";
+    @Value("${FRONTEND_URL}")
+    private String frontendUrl;
 
     public SecurityConfig(UserService userService, Oauth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler, Oauth2AuthenticationFailureHandler oauth2AuthenticationFailureHandler, TokenAuthenticationProcessingFilter tokenAuthenticationProcessingFilter, HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository) {
         this.userService = userService;
@@ -40,20 +41,15 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+        // http settings for cors
+        http.csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable);
 //                .sessionManagement();
 
-        http
-                .formLogin((login) -> login.disable());
-
-        http
+        http.formLogin((login) -> login.disable())
                 .httpBasic((basic) -> basic.disable());
 
-        http
-                .oauth2Login((oauth2) -> oauth2
+        http.oauth2Login((oauth2) -> oauth2
                         .loginPage("/login")
                         .authorizationEndpoint(auth -> auth
                                 .baseUri("/oauth2/authorization")
@@ -61,43 +57,41 @@ public class SecurityConfig {
                         .userInfoEndpoint((userInfoEndpointConfig) ->
                                 userInfoEndpointConfig.userService(userService))
                         .successHandler(oauth2AuthenticationSuccessHandler)
-                        .failureHandler(oauth2AuthenticationFailureHandler)
-                );
+                        .failureHandler(oauth2AuthenticationFailureHandler));
 
-        http
-                .logout((logout) -> logout
+        http.logout((logout) -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/")
+                        .logoutSuccessUrl(frontendUrl)
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
-//                        .deleteCookies("accessTokenName", "refreshTokenName")
+                        .deleteCookies("accessToken", "refreshToken")
                 );
 
 
-        http
-                .authorizeHttpRequests((authorize) -> authorize
-                        .anyRequest().permitAll()
-//                        .requestMatchers("/","/login/**").permitAll()
+        http.authorizeHttpRequests((authorize) -> authorize
+                .anyRequest().permitAll());
+//                                .requestMatchers("/user/**").hasRole("USER")   // "/user" 경로는 "USER" 권한 필요
+//                                .requestMatchers("/","/login/**").permitAll()
+//                                .anyRequest().authenticated()  // 그 외 모든 요청은 인증 필요
 
-//                        .anyRequest().authenticated()
-                );
 
-        http
-                .addFilterBefore(tokenAuthenticationProcessingFilter, UsernamePasswordAuthenticationFilter.class);
-
+        http.addFilterBefore(tokenAuthenticationProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendUrl));
+//        configuration.setAllowedOrigins(List.of(frontendUrl));
+        configuration.addAllowedOriginPattern(frontendUrl);
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         configuration.setAllowCredentials(true);
+
+        configuration.addExposedHeader("Authorization");
+
         UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
         urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", configuration);
         return urlBasedCorsConfigurationSource;
     }
-
 }
