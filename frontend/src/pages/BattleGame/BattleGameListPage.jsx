@@ -9,7 +9,7 @@ import GameRoomListBoard from "@/components/GameRoomList/GameRoomListBoard";
 import { request } from "@/apis/requestBuilder";
 import { getSender } from "@/socket-utils/storage";
 import backgroundPath from "@/assets/backgrounds/battleBackground.gif";
-import { socket } from "../../socket-utils/socket";
+import { socket } from "../../socket-utils/socket2";
 
 const { connect, send, subscribe, disconnect } = socket;
 
@@ -35,13 +35,12 @@ export default function BattleGameListPage() {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) {
-      return parts.pop().split(';').shift();
+      return parts.pop().split(";").shift();
     }
   }
 
-
   const quickMatching = () => {
-    let sender = getCookie("userId");
+    const sender = getCookie("userId");
     if (!sender) {
       alert("로그인한 유저만 이용할 수 있는 기능입니다.");
       return;
@@ -57,7 +56,7 @@ export default function BattleGameListPage() {
           alert(data.targets);
         }
       });
-      
+
       //대기 큐 입장했다고 보내기
       send(
         "/app/game/message",
@@ -65,17 +64,14 @@ export default function BattleGameListPage() {
         JSON.stringify({
           type: "QUICK",
           sender: sender,
-          member: true
+          member: true,
         }),
       );
 
       //응답 메시지 파싱
-    })
-    
+    });
+  };
 
-    
-
-  }
   return (
     <Wrapper>
       <Header />
