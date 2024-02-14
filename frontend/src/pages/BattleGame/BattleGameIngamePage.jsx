@@ -179,6 +179,26 @@ export default function BattleGameIngamePage() {
             }
           }
 
+          // "MAGNET(자석)" 아이템 사용
+          if (data.message && data.message === "MAGNET") {
+            const { targetList, redBundles, blueBundles, targets } = data;
+            if (targets === getTeam().toUpperCase()) {
+              const targetBundles = getTeam() === "red" ? redBundles : blueBundles;
+              usingItemMagnet(targetList, targetBundles);
+            }
+            return;
+          }
+
+          // "FRAME(액자)" 아이템 사용
+          if (data.message && data.message === "FRAME") {
+            const { targetList, redBundles, blueBundles, targets } = data;
+            if (targets === getTeam().toUpperCase()) {
+              const targetBundles = getTeam() === "red" ? redBundles : blueBundles;
+              usingItemFrame(targetList, targetBundles);
+            }
+            return;
+          }
+
           // 우리팀 event
           if (data.message && data.team === getTeam().toUpperCase()) {
             if (data.message && data.message === "LOCKED" && data.senderId !== getSender()) {

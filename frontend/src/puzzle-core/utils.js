@@ -1,5 +1,5 @@
-import { Color } from "paper/dist/paper-core";
-import { groupFit, uniteTiles2 } from "./uniteTiles";
+import { Point, Color } from "paper/dist/paper-core";
+import { uniteTiles2 } from "./uniteTiles";
 
 export const getPuzzlePosition = (puzzle) => {
   if (puzzle.position) {
@@ -15,6 +15,13 @@ export const getPuzzleByIndex = ({ config, puzzleIndex }) => {
 export const getPuzzlePositionByIndex = ({ config, puzzleIndex }) => {
   const puzzle = getPuzzleByIndex({ config, puzzleIndex });
   return getPuzzlePosition(puzzle);
+};
+
+export const updateAllUnGroups = ({ config }) => {
+  config.groupTiles.forEach((gtile) => {
+    gtile[1] = undefined;
+  });
+  return config;
 };
 
 export const updateGroupByBundles = ({ config, bundles }) => {
@@ -51,4 +58,25 @@ export const cleanBorderStyle = ({ config }) => {
     }
   });
   return config;
+};
+
+export const switchDirection = (direction) => {
+  const directionChanger = {
+    0: 3,
+    1: 0,
+    2: 2,
+    3: 1,
+  };
+  const result = directionChanger[direction];
+  return result === undefined ? -1 : result;
+};
+
+export const randomSprinkle = ({ config }) => {
+  config = updateAllUnGroups({ config });
+
+  config.tiles.forEach((_, index) => {
+    const randomX = Math.random() * 960 + 20;
+    const randomY = Math.random() * 710 + 20;
+    config.tiles[index].position = new Point(randomX, randomY);
+  });
 };

@@ -73,15 +73,6 @@ export default function CooperationGameIngamePage() {
     );
   }, []);
 
-  const frameTest = () => {
-    const targetList = [
-      0, 11, 1, 2, 13, 3, 5, 6, 10, 21, 12, 23, 14, 25, 19, 30, 20, 22, 33, 24, 35, 32, 34, 45, 36,
-      44, 46, 54,
-    ];
-    const sortedTargetList = [...targetList].sort((a, b) => a - b);
-    usingItemFrame(sortedTargetList);
-  };
-
   const getGameInfo = () => {
     send(
       "/app/game/message",
@@ -101,7 +92,7 @@ export default function CooperationGameIngamePage() {
         console.log("@@@@@@@@@@@@@@@@ 인게임 소켓 연결 @@@@@@@@@@@@@@@@@@");
         subscribe(`/topic/game/room/${roomId}`, (message) => {
           const data = JSON.parse(message.body);
-          console.log(data);
+          // console.log(data);
 
           // 매번 게임이 끝났는지 체크
           if (Boolean(data.finished)) {
@@ -171,8 +162,8 @@ export default function CooperationGameIngamePage() {
 
           // "FRAME(액자)" 아이템 사용
           if (data.message && data.message === "FRAME") {
-            const { targetList } = data;
-            // usingItemFrame(targetList)
+            const { targetList, redBundles } = data;
+            usingItemFrame(targetList, redBundles);
             return;
           }
 
@@ -264,7 +255,6 @@ export default function CooperationGameIngamePage() {
         <Loading message="게임 정보 받아오는 중..." />
       ) : (
         <>
-          <button onClick={frameTest}>frame test</button>
           <button onClick={() => getGameInfo()}>게임 정보좀요</button>
           <Board>
             <PlayPuzzle
