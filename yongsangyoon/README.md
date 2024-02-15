@@ -39,3 +39,33 @@
     - 일정 계획의 "Story" 부분을 제목만 봐도 이해할 수 있도록 명확하게 적으면 좋겠다. 이미 명확한 부분도 있지만 명확하지 않은 부분은 명확한 표현을 대체해라.
 - [ ]  React puzzle canvas 구현 중
     - 일단 도형을 붙이는 작업을 먼저해보자.
+
+# 🗓️ 1월 19일 (금)
+
+- [x] MR Template 생성
+- [x] webSocket, webRTC 학습 중
+- [x] 팀 KPT 회고 진행
+
+# 🗓️ 1월 22일 (월)
+
+- [x] 팀 전체 프로젝트 일정 계획 세분화 (1)
+- [x] Gerrit 활성화
+- [x] webSocket, webRTC 기반의 클라이언트-백엔드 아키텍처 학습
+
+# 🗓️ 1월 23일 (화)
+
+- [x] 팀 전체 프로젝트 일정 계획 세분화 (2)
+
+# 🗓️ 1월 24일 (수)
+
+- [x] 팀 전체 프로젝트 일정 계획 세분화 (3)
+- [x] puzzle-pop 페이지 라우팅 기능 구현
+- [x] springboot socket + react client 소켓 연결 (1)
+
+# 🗓️ 1월 25일 (목)
+
+- [x] springboot socket + react client 소켓 연결 (2)
+
+# 🗓️ 1월 29일 (월)
+
+- [x] springboot socket + react client 소켓 연결 (3)
