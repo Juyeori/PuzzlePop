@@ -1,6 +1,8 @@
 package com.ssafy.puzzlepop.friend.controller;
 
 import com.ssafy.puzzlepop.friend.domain.FriendDto;
+import com.ssafy.puzzlepop.friend.domain.FriendRequestRespondDto;
+import com.ssafy.puzzlepop.friend.domain.FriendUserInfoDto;
 import com.ssafy.puzzlepop.friend.exception.FriendNotFoundException;
 import com.ssafy.puzzlepop.friend.service.FriendService;
 import com.ssafy.puzzlepop.user.domain.UserDto;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Controller
 @AllArgsConstructor
+@CrossOrigin("*")
 public class FriendController {
 
     private final FriendService friendService;
@@ -26,7 +29,7 @@ public class FriendController {
                                                   @PathVariable("id2") Long id2) {
         try {
             FriendDto responseDto = friendService.getFriendById1AndId2(id1, id2);
-            return ResponseEntity.status(HttpStatus.FOUND).body(responseDto);
+            return ResponseEntity.status(HttpStatus.OK).body(responseDto);
         } catch (FriendNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
@@ -36,12 +39,18 @@ public class FriendController {
 
     @PostMapping("/friend")
     public ResponseEntity<?> createFriend(@RequestBody FriendDto requestDto) {
+        System.out.println("create:" + requestDto);
         try {
             Long id = friendService.createFriend(requestDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(id);
+            if (id == null) {
+                return ResponseEntity.status(HttpStatus.OK).body(null);
+            } else {
+                return ResponseEntity.status(HttpStatus.OK).body(id);
+            }
         } catch (FriendNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
@@ -102,6 +111,7 @@ public class FriendController {
         } catch (FriendNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
@@ -118,5 +128,22 @@ public class FriendController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
+    }
+
+    @PostMapping("/friend/list/{status}")
+    public ResponseEntity<?> getFriendsByUserIdAndStatus(@PathVariable String status, @RequestBody UserDto requestDto) {
+        try {
+            List<FriendUserInfoDto> friendList = friendService.getFriendsByUserIdAndStatus(requestDto.getId(), status);
+            return ResponseEntity.status(HttpStatus.OK).body(friendList);
+        } catch (Exception e) {
+//            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
+    @PostMapping("/friend/respond")
+    public ResponseEntity<?> updateRequestStatus(@RequestBody FriendRequestRespondDto respondDto) {
+        FriendDto updatedDto = friendService.updateRequestStatus(respondDto);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedDto);
     }
 }
