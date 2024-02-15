@@ -8,6 +8,7 @@ import Timer from "@/components/GameIngame/Timer";
 import PrograssBar from "@/components/GameIngame/ProgressBar";
 import Chatting from "@/components/GameWaiting/Chatting";
 import ItemInventory from "@/components/ItemInventory";
+import ResultModal from "@/components/GameIngame/ResultModal";
 
 import { getRoomId, getSender, getTeam } from "@/socket-utils/storage";
 import { socket } from "@/socket-utils/socket2";
@@ -21,7 +22,7 @@ import redTeamBackgroundPath from "@/assets/backgrounds/redTeamBackground.gif";
 import blueTeamBackgroundPath from "@/assets/backgrounds/blueTeamBackground.gif";
 import dropRandomItemPath from "@/assets/effects/dropRandomItem.gif";
 
-import { Box, Dialog, DialogTitle, Snackbar } from "@mui/material";
+import { Box, Dialog, DialogTitle, DialogContent, Snackbar } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { red, blue, deepPurple } from "@mui/material/colors";
 import { useHint } from "@/hooks/useHint";
@@ -130,6 +131,56 @@ export default function BattleGameIngamePage() {
     }
   };
 
+  const attackItemSwitch = (data, isMirror = false) => {
+    console.log(data);
+    const { targets, targetList, deleted, randomItem, redBundles, blueBundles } = data;
+    const attackedTeamBundles = targets === "RED" ? redBundles : blueBundles;
+
+    if (randomItem.name === "FIRE") {
+      console.log("랜덤 아이템 fire 였어!");
+
+      attackFire(
+        targets,
+        targetList,
+        deleted,
+        attackedTeamBundles,
+        setSnackMessage,
+        setSnackOpen,
+        isMirror,
+      );
+    }
+
+    if (randomItem.name === "ROCKET") {
+      console.log("랜덤 아이템 rocket 였어!");
+      attackRocket(
+        targets,
+        targetList,
+        deleted,
+        attackedTeamBundles,
+        setSnackMessage,
+        setSnackOpen,
+        isMirror,
+      );
+    }
+
+    if (randomItem.name === "EARTHQUAKE") {
+      console.log("랜덤 아이템 earthquake 였어!");
+
+      console.log("지진 발동", data);
+
+      attackEarthquake(
+        targets,
+        targetList,
+        deleted,
+        attackedTeamBundles,
+        setSnackMessage,
+        setSnackOpen,
+        isMirror,
+      );
+    }
+  };
+  // const temp = true;
+
   const connectSocket = async () => {
     connect(
       () => {
@@ -138,14 +189,26 @@ export default function BattleGameIngamePage() {
           const data = JSON.parse(message.body);
           console.log(data);
 
+          // console.log(
+          //   data.finished,
+          //   Boolean(data.finished),
+          //   data.redProgressPercent === 100,
+          //   data.blueProgressPercent === 100,
+          //   data.time,
+          // );
+          // console.log(
+          //   Boolean(data.finished) ||
+          //     data.redProgressPercent === 100 ||
+          //     data.blueProgressPercent === 100 ||
+          //     (data.time !== undefined && data.time <= 0),
+          // );
+
           // 매번 게임이 끝났는지 체크
-          if (
-            Boolean(data.finished) ||
-            data.redProgressPercent === 100 ||
-            data.blueProgressPercent === 100
-          ) {
+          if (data.finished === true) {
+            // if (temp === true) {
             // disconnect();
             console.log("게임 끝남 !"); // TODO : 게임 끝났을 때 effect
+            console.log(data, gameData);
             setTimeout(() => {
               setIsOpenedDialog(true);
             }, 1000);
@@ -332,34 +395,7 @@ export default function BattleGameIngamePage() {
               dropRandomItemElement.current.parentNode.removeChild(dropRandomItemElement.current);
             }
 
-            const { targets, targetList, deleted, randomItem, redBundles, blueBundles } = data;
-
-            if (randomItem.name === "FIRE") {
-              console.log("랜덤 아이템 fire 였어!");
-
-              const attackedTeamBundles = targets === "RED" ? redBundles : blueBundles;
-              attackFire(
-                targets,
-                targetList,
-                deleted,
-                attackedTeamBundles,
-                setSnackMessage,
-                setIsShowSnackbar,
-              );
-            }
-
-            if (randomItem.name === "ROCKET") {
-              console.log("랜덤 아이템 rocket 였어!");
-              attackRocket(targets, targetList, deleted, setSnackMessage, setIsShowSnackbar);
-            }
-
-            if (randomItem.name === "EARTHQUAKE") {
-              console.log("랜덤 아이템 earthquake 였어!");
-
-              console.log("지진 발동", data);
-
-              attackEarthquake(targets, targetList, deleted, setSnackMessage, setIsShowSnackbar);
-            }
+            attackItemSwitch(data);
           }
 
           if (data.message && data.message === "SHIELD") {
@@ -368,6 +404,14 @@ export default function BattleGameIngamePage() {
             if (dropRandomItemElement.current.parentNode) {
               dropRandomItemElement.current.parentNode.removeChild(dropRandomItemElement.current);
             }
+
+            if (data.targets === getTeam()) {
+              setSnackMessage(`🛡️쉴드로 ${currentDropRandomItem.current}을 막았어요!🛡️`);
+            } else {
+              setSnackMessage(`🛡️상대팀이 쉴드로 ${currentDropRandomItem.current}을 막았어요!🛡️`);
+            }
+
+            setSnackOpen(true);
           }
 
           if (data.message && data.message === "MIRROR") {
@@ -376,24 +420,8 @@ export default function BattleGameIngamePage() {
             if (dropRandomItemElement.current.parentNode) {
               dropRandomItemElement.current.parentNode.removeChild(dropRandomItemElement.current);
             }
-            const { targets, targetList, deleted, randomItem, redBundles, blueBundles } = data;
 
-            console.log("거울로 맞는 아이템", currentDropRandomItem.current);
-
-            if (currentDropRandomItem.current === "FIRE") {
-              console.log("거울로 불 지르기를 맞았어!!!");
-
-              const attackedTeamBundles = targets === "RED" ? redBundles : blueBundles;
-              attackFire(targets, targetList, deleted, attackedTeamBundles);
-            } else if (currentDropRandomItem.current === "ROCKET") {
-              console.log("거울로 로켓을 맞았어!!!");
-
-              attackRocket(targets, targetList, deleted);
-            } else if (currentDropRandomItem.current === "EARTHQUAKE") {
-              console.log("거울로 지진을 맞았어!!!");
-
-              attackEarthquake(targets, targetList, deleted, setSnackMessage, setIsShowSnackbar);
-            }
+            attackItemSwitch(data, true);
           }
 
           // drop random Item 생성
@@ -434,8 +462,13 @@ export default function BattleGameIngamePage() {
             dropRandomItemElement.current = dropRandomItemImg;
             canvasContainer.appendChild(dropRandomItemImg);
 
-            // 현재 아이템 저장 (MIRROR 효과를 위해)
-            currentDropRandomItem.current = data.randomItem.name;
+            // 현재 아이템 저장 (SHIELD 효과를 위해)
+            currentDropRandomItem.current =
+              data.randomItem.name === "EARTHQUAKE"
+                ? "회오리"
+                : data.randomItem.name === "FIRE"
+                  ? "불 지르기"
+                  : "로켓";
 
             // alert 대신 메시지를 콘솔에 출력
             console.log(
@@ -598,6 +631,15 @@ export default function BattleGameIngamePage() {
               <DialogTitle>게임 결과</DialogTitle>
             </Dialog>
           </ThemeProvider>
+
+          {/* <ResultModal
+            isOpenedDialog={isOpenedDialog}
+            handleCloseGame={handleCloseGame}
+            ourPercent={ourPercent}
+            enemyPercent={enemyPercent}
+            ourTeam={gameData[`${getTeam()}Team`]}
+            
+          /> */}
         </>
       )}
     </Wrapper>
