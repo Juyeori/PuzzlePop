@@ -259,6 +259,7 @@ public class GameService {
             else if (mirror == -1 && shield != -1) {
                 //아무일 없음
                 res.setMessage("SHIELD");
+                res.setTeam(yourColor);
                 yourPuzzle.useItem(shield + 1, yourPuzzle);
             }
             //둘다 있을 때
@@ -397,7 +398,7 @@ public class GameService {
         return res;
     }
 
-    private void save(Game game) throws Exception {
+    public synchronized void save(Game game) throws Exception {
         // 저장된 적 있으면 return
         if (game.isSaved()) return;
 
