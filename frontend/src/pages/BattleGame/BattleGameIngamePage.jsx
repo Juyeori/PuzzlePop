@@ -145,7 +145,7 @@ export default function BattleGameIngamePage() {
         deleted,
         attackedTeamBundles,
         setSnackMessage,
-        setSnackOpen,
+        setIsShowSnackbar,
         isMirror,
       );
     }
@@ -158,7 +158,7 @@ export default function BattleGameIngamePage() {
         deleted,
         attackedTeamBundles,
         setSnackMessage,
-        setSnackOpen,
+        setIsShowSnackbar,
         isMirror,
       );
     }
@@ -174,7 +174,7 @@ export default function BattleGameIngamePage() {
         deleted,
         attackedTeamBundles,
         setSnackMessage,
-        setSnackOpen,
+        setIsShowSnackbar,
         isMirror,
       );
     }
@@ -626,20 +626,20 @@ export default function BattleGameIngamePage() {
             message={snackMessage}
           />
 
-          <ThemeProvider theme={theme}>
+          {/* <ThemeProvider theme={theme}>
             <Dialog open={isOpenedDialog} onClose={handleCloseGame}>
               <DialogTitle>게임 결과</DialogTitle>
             </Dialog>
-          </ThemeProvider>
+          </ThemeProvider> */}
 
-          {/* <ResultModal
+          <ResultModal
             isOpenedDialog={isOpenedDialog}
             handleCloseGame={handleCloseGame}
             ourPercent={ourPercent}
             enemyPercent={enemyPercent}
-            ourTeam={gameData[`${getTeam()}Team`]}
-            
-          /> */}
+            ourTeam={gameData[`${getTeam()}Team`].players}
+            enemyTeam={getTeam() === "red" ? gameData.blueTeam.players : gameData.redTeam.players}
+          />
         </>
       )}
     </Wrapper>
